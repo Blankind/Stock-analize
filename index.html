@@ -372,7 +372,6 @@ function smartNum(v) {
   if(isNaN(v)) return '—';
   if(Number.isInteger(v) || Math.abs(v - Math.round(v)) < 1e-9)
     return Math.round(v).toLocaleString('id-ID');
-  // up to 4 decimals, strip trailing zeros
   let s = v.toFixed(4).replace(/\.?0+$/,'');
   let [i,d] = s.split('.');
   return parseInt(i).toLocaleString('id-ID') + (d?'.'+d:'');
@@ -390,17 +389,17 @@ function smartRpSigned(v) {
   return v<0?`-Rp ${n}`:v>0?`+Rp ${n}`:`Rp ${n}`;
 }
 function fmtDate(d) {
-  if(!d) return '';
+  if(!d || isNaN(new Date(d).getTime())) return '—';
   const dt = new Date(d);
   return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
 }
 function fmtDateShort(d) {
-  if(!d) return '';
+  if(!d || isNaN(new Date(d).getTime())) return '?';
   const dt = new Date(d);
   return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
 }
 function fmtDateISO(d) {
-  if(!d) return '';
+  if(!d || isNaN(new Date(d).getTime())) return '';
   const dt = new Date(d);
   const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');
   return `${y}-${m}-${dd}`;
@@ -433,9 +432,11 @@ function processFile(file) {
     const reader=new FileReader();
     reader.onload=e=>{
       try {
+        // ✅ FIX 1: raw:true agar angka terbaca sebagai number asli (bukan string berformat),
+        //           cellDates:true agar tanggal terbaca sebagai Date object
         const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
         parseData(raw);
         buildAggregates();
         showDashboard();
@@ -459,11 +460,13 @@ function parseData(rows) {
   for(let i=startRow;i<rows.length;i++){
     const r=rows[i];
     if(!r||!r[1]) continue;
+    // ✅ FIX 2: parseExcelDate sekarang bisa terima Date object (dari cellDates:true)
     const postingDate = parseExcelDate(r[4]);
-    const qty   = parseFloat(r[10])||0;
-    const curQty= parseFloat(r[11])||0;
-    const qtyDiff=parseFloat(r[12])||0;
-    const valRate=parseFloat(r[13])||0;
+    // ✅ FIX: parseFloat langsung dari number, tapi tetap aman untuk string
+    const qty    = toNum(r[10]);
+    const curQty = toNum(r[11]);
+    const qtyDiff= toNum(r[12]);
+    const valRate= toNum(r[13]);
     const valuasiDiff = qtyDiff * valRate;
     const wh = String(r[7]||'').replace(/ - PD$/,'').trim();
     const user= String(r[15]||'').split('@')[0];
@@ -479,16 +482,34 @@ function parseData(rows) {
   }
 }
 
+// ✅ FIX: helper untuk parse number dari raw Excel (handle string dengan koma ribuan)
+function toNum(v) {
+  if(v===null||v===undefined||v==='') return 0;
+  if(typeof v==='number') return v;
+  // jika string, hapus koma sebagai pemisah ribuan lalu parse
+  return parseFloat(String(v).replace(/,/g,'')) || 0;
+}
+
+// ✅ FIX: parseExcelDate support Date object, string, dan serial number Excel
 function parseExcelDate(v) {
   if(!v) return null;
-  // If already a date string like 2024-01-15
-  if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(v);
-  // Excel serial number
-  if(typeof v==='number') {
-    const d=new Date(Math.round((v-25569)*86400*1000));
-    return d;
+  // Jika sudah berupa Date object (dari cellDates:true)
+  if(v instanceof Date) {
+    return isNaN(v.getTime()) ? null : v;
   }
-  return new Date(v);
+  // Jika string format yyyy-mm-dd
+  if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) {
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // Jika serial number Excel
+  if(typeof v==='number') {
+    // Excel serial: 1 = 1 Jan 1900 (tapi ada bug: Excel anggap 1900 leap year)
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function buildAggregates() {
@@ -500,11 +521,16 @@ function buildAggregates() {
       ItemCode:r.ItemCode, ItemName:r.ItemName, WH_Short:r.WH_Short, User_Short:r.User_Short,
       QtyDiff:0, ValuasiDiff:0, valRateSum:0, valRateCnt:0, docs:new Set(),
       TanggalAwal:r.PostingDate, TanggalAkhir:r.PostingDate,
+      // ✅ FIX 3: simpan Qty Sistem & Qty Fisik di pivot (ambil nilai terakhir)
+      CurrentQty:0, Quantity:0,
     };
     const p=pivMap[key];
     p.QtyDiff+=r.QtyDiff; p.ValuasiDiff+=r.ValuasiDiff;
     p.valRateSum+=r.ValRate; p.valRateCnt++;
     p.docs.add(r.ID);
+    // simpan nilai terakhir untuk CurrentQty & Quantity
+    p.CurrentQty = r.CurrentQty;
+    p.Quantity   = r.Quantity;
     if(r.PostingDate&&p.TanggalAwal&&r.PostingDate<p.TanggalAwal) p.TanggalAwal=r.PostingDate;
     if(r.PostingDate&&p.TanggalAkhir&&r.PostingDate>p.TanggalAkhir) p.TanggalAkhir=r.PostingDate;
   }
@@ -544,9 +570,10 @@ function buildAggregates() {
   // ── BY_DATE ──
   const dateMap={};
   for(const r of RAW){
+    if(!r.PostingDate) continue;
     const dk=fmtDateISO(r.PostingDate);
     if(!dk) continue;
-    if(!dateMap[dk]) dateMap[dk]={date:r.PostingDate,items:0,net_qty:0,net_val:0};
+    if(!dateMap[dk]) dateMap[dk]={date:r.PostingDate,label:fmtDateShort(r.PostingDate),items:0,net_qty:0,net_val:0};
     dateMap[dk].items++; dateMap[dk].net_qty+=r.QtyDiff; dateMap[dk].net_val+=r.ValuasiDiff;
   }
   BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
@@ -570,7 +597,6 @@ function buildAggregates() {
 function showDashboard() {
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
-  // header
   const netV=TOTALS.netVal;
   document.getElementById('header-net-val').textContent=
     (netV<0?'-':'')+fmtRp(Math.abs(netV));
@@ -664,7 +690,6 @@ function renderRingkasan() {
       </td>
     </tr>`;
   }
-  // Total row
   whRows+=`<tr class="tr-total">
     <td>TOTAL</td>
     <td style="color:var(--muted)">${t.totalItems}</td>
@@ -687,7 +712,6 @@ function renderRingkasan() {
     </table></div>
   </div>`;
 
-  // Status bars
   const statuses=[
     {label:'Item Defisit (net)',n:nDef,color:'#ef4444'},
     {label:'Item Surplus (net)',n:nSur,color:'#22c55e'},
@@ -712,7 +736,6 @@ function renderRingkasan() {
     ${statusHtml}
   </div>`;
 
-  // Pie chart
   Plotly.newPlot('chart-pie',[{
     type:'pie', labels:BY_WH.map(w=>w.WH_Short), values:BY_WH.map(w=>Math.abs(w.def_val)),
     hole:0.55, marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
@@ -782,7 +805,8 @@ function renderTrend() {
     <div class="card" id="chart-trend-vol"></div>
     <div class="card warn-box" id="trend-kritis"></div>`;
 
-  const labels=BY_DATE.map(d=>fmtDateShort(d.date));
+  // ✅ FIX: gunakan label dari BY_DATE (sudah benar dari buildAggregates)
+  const labels=BY_DATE.map(d=>d.label||fmtDateShort(d.date));
   const colors=BY_DATE.map(d=>d.net_val<0?C.deficit:C.surplus);
 
   Plotly.newPlot('chart-trend-val',[{
@@ -805,7 +829,6 @@ function renderTrend() {
     yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
   },{responsive:true,displayModeBar:false});
 
-  // Kritis
   const kritis=[...BY_DATE].sort((a,b)=>a.net_val-b.net_val).slice(0,3);
   let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
     <span style="color:var(--warn)">▲</span>
@@ -814,7 +837,7 @@ function renderTrend() {
   for(const k of kritis){
     kritisHtml+=`<div style="margin-bottom:8px;font-size:13px;color:#94a3b8">
       <span style="color:var(--warn);margin-right:6px">·</span>
-      ${fmtDateShort(k.date)}: ${k.items} item, net valuasi ${k.net_val<0?'-Rp '+fmtRp(Math.abs(k.net_val)):'Rp '+fmtRp(k.net_val)}
+      ${k.label||fmtDateShort(k.date)}: ${k.items} item, net valuasi ${k.net_val<0?'-Rp '+fmtRp(Math.abs(k.net_val)):'Rp '+fmtRp(k.net_val)}
     </div>`;
   }
   document.getElementById('trend-kritis').innerHTML=kritisHtml;
@@ -860,12 +883,14 @@ function renderPengguna() {
 
   el.innerHTML=`<div class="card" id="chart-user"></div>${cardsHtml}`;
 
+  // ✅ FIX: sort BY_USER by def_val ascending untuk chart
+  const sorted=[...BY_USER].sort((a,b)=>a.def_val-b.def_val);
   Plotly.newPlot('chart-user',[{
     type:'bar',orientation:'h',
-    x:BY_USER.map(u=>Math.abs(u.def_val)/1e6),
-    y:BY_USER.map(u=>u.User_Short),
-    marker:{color:WH_PAL.slice(0,BY_USER.length)},
-    hovertemplate:'%{y}<br>Defisit: Rp %{x:.1f} Jt<extra></extra>',
+    x:sorted.map(u=>Math.abs(u.def_val)/1e6),
+    y:sorted.map(u=>u.User_Short),
+    marker:{color:WH_PAL.slice(0,sorted.length)},
+    hovertemplate:'%{y}<br>Defisit: Rp %{x:.2f} Jt<extra></extra>',
     name:'Defisit Valuasi',
   }],{...PLOT_LAY,
     title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},
@@ -890,7 +915,7 @@ function renderTopItem() {
     text:TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),
     textposition:'inside',
     customdata:TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.1f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
   }],{...PLOT_LAY,
     title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},
     yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
@@ -908,7 +933,7 @@ function renderTopItem() {
     text:TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),
     textposition:'inside',
     customdata:TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.1f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
   }],{...PLOT_LAY,
     title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},
     yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
@@ -981,10 +1006,10 @@ function applyDetailFilter() {
 
 function renderDetailSummary() {
   const d=detailFiltered;
+  const wh=document.getElementById('dd-wh')?.value||'';
+  const tipe=document.getElementById('dd-tipe')?.value||'';
+  const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
   const nDocs=new Set(RAW.filter(r=>{
-    const wh=document.getElementById('dd-wh')?.value||'';
-    const tipe=document.getElementById('dd-tipe')?.value||'';
-    const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
     return (!wh||r.WH_Short===wh)&&
            (!tipe||r.Tipe===tipe)&&
            (!search||(r.ItemName||'').toLowerCase().includes(search)||(r.ItemCode||'').toLowerCase().includes(search));
@@ -1058,8 +1083,15 @@ function renderDetailTable() {
       let style=col.num?'text-align:right':'';
       let display='';
       if(col.date) display=fmtDateISO(val);
-      else if(col.rp) { display=smartNum(Math.abs(val)); style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted); }
-      else if(col.num) { display=smartNum(val); style+=';color:'+(col.key==='QtyDiff'||col.key==='ValuasiDiff'?(val<0?C.deficit:val>0?C.surplus:C.muted):'#cbd5e1'); }
+      else if(col.rp) {
+        const n = (val===null||val===undefined||val===''||isNaN(val)) ? '—' : smartNum(Math.abs(val));
+        display = n;
+        style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
+      }
+      else if(col.num) {
+        display = (val===null||val===undefined||val===''||isNaN(val)) ? '—' : smartNum(val);
+        style+=';color:'+(col.key==='QtyDiff'||col.key==='ValuasiDiff'?(val<0?C.deficit:val>0?C.surplus:C.muted):'#cbd5e1');
+      }
       else if(col.key==='Tipe') { display=val; style+=`;color:${tipeColor};font-weight:600`; }
       else display=val||'';
       tbody+=`<td style="font-size:12px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:${col.w};${style}">${display}</td>`;
@@ -1113,9 +1145,8 @@ function showModal(idx) {
   const accent=r.Tipe==='Defisit'?'#ef4444':'#22c55e';
   const tipeBg=r.Tipe==='Defisit'?'#ef444418':'#22c55e18';
 
-  // Source documents
   const docs=RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
-    .sort((a,b)=>b.PostingDate-a.PostingDate);
+    .sort((a,b)=>(b.PostingDate||0)-(a.PostingDate||0));
 
   let docRows='';
   docs.forEach((d,i)=>{
