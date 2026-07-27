@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Reconciliation · Analyser</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+  :root {
+    --bg:      #080d1a;
+    --card:    #0e1729;
+    --card2:   #131f35;
+    --border:  #1e2d45;
+    --text:    #e2e8f0;
+    --muted:   #64748b;
+    --neutral: #818cf8;
+    --deficit: #f87171;
+    --surplus: #34d399;
+    --warn:    #fbbf24;
+    --font: 'Inter', 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* ── UPLOAD SCREEN ── */
+  #upload-screen {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 40px 20px;
+    background: linear-gradient(160deg, #0d1a2d 0%, var(--bg) 70%);
+  }
+  .upload-logo { font-size: 11px; font-weight: 700; color: var(--neutral); letter-spacing: 2px;
+    text-transform: uppercase; background: #818cf815; border: 1px solid #818cf830;
+    border-radius: 6px; padding: 4px 14px; margin-bottom: 28px; }
+  .upload-title { font-size: 28px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.5px;
+    margin-bottom: 10px; text-align: center; }
+  .upload-sub { font-size: 14px; color: var(--muted); margin-bottom: 48px; text-align: center; }
+  .upload-box {
+    width: 100%; max-width: 500px;
+    border: 2px dashed var(--border); border-radius: 20px;
+    padding: 48px 32px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--card);
+  }
+  .upload-box:hover, .upload-box.drag { border-color: var(--neutral); background: #818cf808; }
+  .upload-icon { font-size: 40px; margin-bottom: 16px; }
+  .upload-box h3 { font-size: 16px; font-weight: 600; color: #e2e8f0; margin-bottom: 8px; }
+  .upload-box p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .btn-upload {
+    display: inline-block; background: var(--neutral); color: #fff;
+    border: none; border-radius: 10px; padding: 10px 28px;
+    font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;
+  }
+  .btn-upload:hover { opacity: 0.88; }
+  #file-input { display: none; }
+  .upload-note { margin-top: 20px; font-size: 12px; color: var(--muted); }
+  .upload-note span { color: var(--surplus); }
+  #upload-error { color: var(--deficit); font-size: 13px; margin-top: 16px; display: none; }
+
+  /* ── LOADING ── */
+  #loading-screen {
+    display: none; min-height: 100vh;
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border);
+    border-top-color: var(--neutral); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--muted); }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(160deg, #0d1a2d 0%, var(--bg) 70%);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 36px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .header-left { flex: 1; }
+  .header-badge { font-size: 10px; font-weight: 700; color: var(--neutral); letter-spacing: 1.5px;
+    text-transform: uppercase; background: #818cf815; border: 1px solid #818cf830;
+    border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
+  .header-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .header-title { font-size: 22px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.5px; margin: 8px 0 6px; }
+  .header-meta { font-size: 12px; color: #94a3b8; }
+  .header-meta span { color: var(--border); margin: 0 6px; }
+  .header-net {
+    background: #f8717112; border: 1px solid #f8717130;
+    border-radius: 12px; padding: 14px 22px; text-align: right;
+  }
+  .header-net-label { font-size: 9px; font-weight: 700; color: var(--deficit);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .header-net-val { font-size: 20px; font-weight: 700; color: var(--deficit); letter-spacing: -0.5px; }
+  .btn-reset { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); font-size: 11px; font-weight: 600; padding: 7px 14px; cursor: pointer;
+    letter-spacing: 0.3px; transition: color 0.15s; }
+  .btn-reset:hover { color: var(--text); }
+
+  /* Tabs */
+  .tab-bar {
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; gap: 0; overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 0 22px; height: 44px; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.4px; color: var(--muted); background: transparent;
+    border: none; border-bottom: 2px solid transparent; cursor: pointer;
+    white-space: nowrap; transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--neutral); border-bottom-color: var(--neutral); }
+
+  /* Content */
+  .tab-content { padding: 28px 36px; max-width: 1360px; margin: 0 auto; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.8px; border-left: 3px solid var(--neutral); padding-left: 12px;
+    margin-bottom: 18px;
+  }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px,1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 22px 22px; position: relative; overflow: hidden;
+  }
+  .kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.4px; font-weight: 600; margin-bottom: 12px; }
+  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .kpi-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; opacity: 0.4; border-radius: 0 0 14px 14px; }
+
+  /* Table */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; font-size: 10px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.2px; background: #080d1a;
+    border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .tr-total td { background: var(--bg) !important; }
+  .tr-total td:first-child { font-size: 11px; font-weight: 700; color: var(--neutral); letter-spacing: 1px; }
+
+  /* Status bars */
+  .status-bar-track { background: #334155; border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 14px; }
+  .status-bar-fill { height: 100%; border-radius: 6px; }
+
+  /* Charts 2-col */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* WH Cards (gudang tab) */
+  .wh-card { border-left: 4px solid; }
+  .risk-track { background: #22c55e30; border-radius: 6px; height: 8px; margin-top: 12px; overflow: hidden; }
+  .risk-fill { height: 100%; border-radius: 6px; }
+
+  /* User Cards */
+  .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; }
+  .user-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; border-width: 2px; border-style: solid; }
+  .stat-mini { background: #0f172a; border-radius: 8px; padding: 10px; flex: 1; }
+  .stat-mini-label { font-size: 10px; color: var(--muted); }
+  .stat-mini-val { font-size: 16px; font-weight: 700; }
+
+  /* Warn box */
+  .warn-box { border: 1px solid #fbbf2430; background: var(--card2); }
+
+  /* Detail tab filters */
+  .filter-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  select, input[type=text] {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; color: var(--text); font-size: 13px; font-family: var(--font);
+    outline: none;
+  }
+  select { min-width: 150px; }
+  input[type=text] { flex: 2; min-width: 180px; }
+  select:focus, input:focus { border-color: var(--neutral); }
+  .btn-export {
+    background: var(--neutral); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 18px; font-size: 12px; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.3px; white-space: nowrap;
+  }
+  .btn-export:hover { opacity: 0.88; }
+
+  /* Data table */
+  .data-tbl th { cursor: pointer; user-select: none; }
+  .data-tbl th:hover { color: var(--text); }
+  .data-tbl tr:nth-child(odd) td { background: #0b1120; }
+  .data-tbl tr:hover td { background: #818cf810; }
+  .data-tbl tr.selected td { background: #818cf815; outline: 1px solid #818cf840; }
+
+  /* Pagination */
+  .pagination { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 12px; color: var(--muted); }
+  .page-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 4px 10px; cursor: pointer; font-size: 12px; }
+  .page-btn:hover { border-color: var(--neutral); color: var(--neutral); }
+  .page-btn:disabled { opacity: 0.35; cursor: default; }
+  .page-info { color: var(--muted); }
+  .pagesize-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+  .ps-btn { background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 5px 12px; cursor: pointer; font-size: 12px; }
+  .ps-btn.active, .ps-btn:hover { border-color: var(--neutral); color: var(--neutral); }
+
+  /* Info banner */
+  .info-banner { background: #818cf810; border: 1px solid #818cf830; border-radius: 10px;
+    padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: var(--muted); }
+  .info-banner strong { color: #e2e8f0; }
+
+  /* Summary mini cards */
+  .summary-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; flex: 1; min-width: 140px; }
+  .mini-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: 8px; font-weight: 600; }
+  .mini-val { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+
+  /* Modal */
+  #modal-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  #modal-overlay.open { display: flex; }
+  .modal-panel {
+    background: var(--card); border-radius: 16px; padding: 18px 22px 22px;
+    width: 860px; max-width: 100%; max-height: 88vh; overflow-y: auto;
+    position: relative;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--card); z-index: 10; padding-top: 2px;
+  }
+  .modal-close { cursor: pointer; font-size: 14px; color: var(--muted); padding: 2px 8px;
+    background: var(--card2); border-radius: 4px; border: none; color: var(--muted); }
+  .modal-close:hover { color: var(--text); }
+  .cell-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .detail-cell { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 13px; flex: 1; min-width: 110px; }
+  .detail-cell-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.3px; margin-bottom: 6px; font-weight: 600; }
+  .detail-cell-val { font-size: 13px; font-weight: 500; color: #e2e8f0; word-break: break-word; }
+  .detail-cell.big .detail-cell-val { font-size: 15px; font-weight: 700; }
+  .tipe-badge { display: inline-block; border-radius: 20px; padding: 3px 13px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+  .docs-section { background: var(--bg); border-radius: 10px; padding: 14px 16px;
+    border: 1px solid var(--border); }
+  .docs-title { font-weight: 700; font-size: 11px; color: #e2e8f0; text-transform: uppercase;
+    letter-spacing: 1.4px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .docs-scroll { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+  .docs-scroll table th { text-align: right; }
+  .docs-scroll table th:first-child, .docs-scroll table th:nth-child(2),
+  .docs-scroll table th:nth-child(3), .docs-scroll table th:last-child { text-align: left; }
+  .docs-scroll table td { text-align: right; }
+  .docs-scroll table td:first-child, .docs-scroll table td:nth-child(2),
+  .docs-scroll table td:nth-child(3), .docs-scroll table td:last-child { text-align: left; }
+
+  @media (max-width: 700px) {
+    .header { padding: 16px 16px; }
+    .tab-content { padding: 16px 12px; }
+    .tab-bar { padding: 0 8px; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .filter-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen">
+  <div class="upload-logo">ERPNext · Stock Reconciliation</div>
+  <div class="upload-title">Analisa Rekonsiliasi Stok</div>
+  <div class="upload-sub">Upload file Excel untuk memulai analisis — data diproses langsung di browser</div>
+  <div class="upload-box" id="drop-zone">
+    <div class="upload-icon">📊</div>
+    <h3>Upload File Excel</h3>
+    <p>Drag &amp; drop file ke sini, atau klik tombol di bawah</p>
+    <label class="btn-upload" for="file-input">Pilih File Excel</label>
+    <input type="file" id="file-input" accept=".xlsx,.xls">
+  </div>
+  <div class="upload-note">
+    <span>✓</span> Data tidak dikirim ke server — semua diproses di browser kamu
+  </div>
+  <div id="upload-error"></div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;">
+  <div class="spinner"></div>
+  <div class="loading-text">Memproses data Excel...</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="header">
+    <div class="header-left">
+      <div style="margin-bottom:8px">
+        <span class="header-badge">ERPNext</span>
+        <span class="header-sub">Stock Reconciliation</span>
+      </div>
+      <div class="header-title">Analisa Rekonsiliasi Stok</div>
+      <div class="header-meta" id="header-meta"></div>
+    </div>
+    <div class="header-net">
+      <div class="header-net-label">Net Selisih Valuasi</div>
+      <div class="header-net-val" id="header-net-val">—</div>
+    </div>
+    <button class="btn-reset" onclick="resetDashboard()">↩ Ganti File</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('ringkasan',this)">Ringkasan</button>
+    <button class="tab-btn" onclick="switchTab('gudang',this)">Gudang</button>
+    <button class="tab-btn" onclick="switchTab('trend',this)">Trend</button>
+    <button class="tab-btn" onclick="switchTab('pengguna',this)">Pengguna</button>
+    <button class="tab-btn" onclick="switchTab('topitem',this)">Top Item</button>
+    <button class="tab-btn" onclick="switchTab('detail',this)">Data Detail</button>
+  </div>
+
+  <div class="tab-content" id="tab-content"></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModalIfOverlay(event)">
+  <div class="modal-panel" id="modal-panel"></div>
+</div>
+
+<script>
+// ── PALETTE & COLORS ──────────────────────────────────────────
+const C = {
+  deficit:'#f87171', surplus:'#34d399', neutral:'#818cf8',
+  warn:'#fbbf24', muted:'#64748b', bg:'#080d1a', card:'#0e1729',
+  card2:'#131f35', border:'#1e2d45', text:'#e2e8f0'
+};
+const WH_PAL = ['#818cf8','#34d399','#fbbf24','#f472b6','#22d3ee'];
+const PLOT_LAY = {
+  paper_bgcolor:C.card, plot_bgcolor:C.bg,
+  font:{color:'#cbd5e1',family:'"Inter","Segoe UI",sans-serif',size:12},
+  margin:{l:50,r:24,t:48,b:50},
+  legend:{bgcolor:C.card,bordercolor:C.border,borderwidth:1},
+  xaxis:{gridcolor:'#1a2840',linecolor:C.border,zerolinecolor:C.border},
+  yaxis:{gridcolor:'#1a2840',linecolor:C.border,zerolinecolor:C.border},
+};
+const TITLE_FONT = {font:{size:12,color:'#94a3b8',family:'"Inter",sans-serif'},x:0.01};
+
+// ── GLOBAL STATE ──────────────────────────────────────────────
+let RAW=[], PIV=[], BY_WH=[], BY_DATE=[], BY_USER=[];
+let TOP_DEF=[], TOP_SUR=[];
+let TOTALS={};
+let currentTab='ringkasan';
+// detail tab state
+let detailFiltered=[], detailPage=1, detailPageSize=50, detailSort={col:null,asc:true};
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmtRp(v) {
+  v = Math.abs(v);
+  if(v>=1e9) return `Rp ${(v/1e9).toFixed(2)} M`;
+  if(v>=1e6) return `Rp ${(v/1e6).toFixed(1)} Jt`;
+  if(v>=1e3) return `Rp ${(v/1e3).toFixed(0)} Rb`;
+  return `Rp ${v.toFixed(0)}`;
+}
+function smartNum(v) {
+  v = parseFloat(v);
+  if(isNaN(v)) return '—';
+  if(Number.isInteger(v) || Math.abs(v - Math.round(v)) < 1e-9)
+    return Math.round(v).toLocaleString('id-ID');
+  // up to 4 decimals, strip trailing zeros
+  let s = v.toFixed(4).replace(/\.?0+$/,'');
+  let [i,d] = s.split('.');
+  return parseInt(i).toLocaleString('id-ID') + (d?'.'+d:'');
+}
+function smartSigned(v) {
+  const n = smartNum(Math.abs(v));
+  return v<0?`-${n}`:v>0?`+${n}`:n;
+}
+function smartRp(v) {
+  const n = smartNum(Math.abs(v));
+  return v<0?`-Rp ${n}`:`Rp ${n}`;
+}
+function smartRpSigned(v) {
+  const n = smartNum(Math.abs(v));
+  return v<0?`-Rp ${n}`:v>0?`+Rp ${n}`:`Rp ${n}`;
+}
+function fmtDate(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtDateShort(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+}
+function fmtDateISO(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function h(tag,cls,inner,style='') {
+  return `<${tag}${cls?` class="${cls}"`:''}${style?` style="${style}"`:''}>${inner}</${tag}>`;
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change',e=>{
+  if(e.target.files[0]) processFile(e.target.files[0]);
+});
+const dropZone=document.getElementById('drop-zone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop',e=>{
+  e.preventDefault(); dropZone.classList.remove('drag');
+  if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+
+function showError(msg) {
+  const el=document.getElementById('upload-error');
+  el.textContent=msg; el.style.display='block';
+}
+
+function processFile(file) {
+  document.getElementById('upload-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='flex';
+  setTimeout(()=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try {
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+        parseData(raw);
+        buildAggregates();
+        showDashboard();
+      } catch(err) {
+        document.getElementById('loading-screen').style.display='none';
+        document.getElementById('upload-screen').style.display='flex';
+        showError('Gagal membaca file. Pastikan format kolom sesuai. '+err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  },50);
+}
+
+function parseData(rows) {
+  // skip header row(s) — find first row where col[1] looks like ID pattern (MAT-RECO-*)
+  let startRow=1;
+  for(let i=0;i<Math.min(5,rows.length);i++){
+    if(rows[i]&&String(rows[i][1]||'').includes('MAT')){startRow=i;break;}
+  }
+  RAW=[];
+  for(let i=startRow;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[1]) continue;
+    const postingDate = parseExcelDate(r[4]);
+    const qty   = parseFloat(r[10])||0;
+    const curQty= parseFloat(r[11])||0;
+    const qtyDiff=parseFloat(r[12])||0;
+    const valRate=parseFloat(r[13])||0;
+    const valuasiDiff = qtyDiff * valRate;
+    const wh = String(r[7]||'').replace(/ - PD$/,'').trim();
+    const user= String(r[15]||'').split('@')[0];
+    RAW.push({
+      Sr:r[0], ID:String(r[1]||''), Status:r[2], CostCenter:r[3],
+      PostingDate:postingDate, PostingTime:r[5],
+      DiffAccount:r[6], Warehouse:String(r[7]||''), ItemCode:String(r[8]||''),
+      ItemName:String(r[9]||''), Quantity:qty, CurrentQty:curQty,
+      QtyDiff:qtyDiff, ValRate:valRate, ValuasiDiff:valuasiDiff,
+      Tipe:qtyDiff<0?'Defisit':qtyDiff>0?'Surplus':'Nol',
+      WH_Short:wh, User_Short:user,
+    });
+  }
+}
+
+function parseExcelDate(v) {
+  if(!v) return null;
+  // If already a date string like 2024-01-15
+  if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(v);
+  // Excel serial number
+  if(typeof v==='number') {
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return d;
+  }
+  return new Date(v);
+}
+
+function buildAggregates() {
+  // ── PIV: group by ItemCode+ItemName+WH_Short+User_Short ──
+  const pivMap={};
+  for(const r of RAW){
+    const key=`${r.ItemCode}|||${r.WH_Short}|||${r.User_Short}`;
+    if(!pivMap[key]) pivMap[key]={
+      ItemCode:r.ItemCode, ItemName:r.ItemName, WH_Short:r.WH_Short, User_Short:r.User_Short,
+      QtyDiff:0, ValuasiDiff:0, valRateSum:0, valRateCnt:0, docs:new Set(),
+      TanggalAwal:r.PostingDate, TanggalAkhir:r.PostingDate,
+    };
+    const p=pivMap[key];
+    p.QtyDiff+=r.QtyDiff; p.ValuasiDiff+=r.ValuasiDiff;
+    p.valRateSum+=r.ValRate; p.valRateCnt++;
+    p.docs.add(r.ID);
+    if(r.PostingDate&&p.TanggalAwal&&r.PostingDate<p.TanggalAwal) p.TanggalAwal=r.PostingDate;
+    if(r.PostingDate&&p.TanggalAkhir&&r.PostingDate>p.TanggalAkhir) p.TanggalAkhir=r.PostingDate;
+  }
+  PIV=Object.values(pivMap).map(p=>({
+    ...p,
+    ValRate: p.valRateCnt?p.valRateSum/p.valRateCnt:0,
+    Docs: p.docs.size,
+    Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
+  }));
+
+  // ── TOTALS ──
+  TOTALS.totalItems=PIV.length;
+  TOTALS.totalDocs=new Set(RAW.map(r=>r.ID)).size;
+  TOTALS.totalDefVal=PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  TOTALS.totalSurVal=PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  TOTALS.totalDefQty=PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
+  TOTALS.totalSurQty=PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
+  TOTALS.netVal=TOTALS.totalDefVal+TOTALS.totalSurVal;
+  TOTALS.minDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
+  TOTALS.maxDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
+
+  // ── BY_WH ──
+  const whMap={};
+  for(const r of PIV){
+    if(!whMap[r.WH_Short]) whMap[r.WH_Short]={WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
+    const w=whMap[r.WH_Short];
+    w.items++; w.docs+=r.Docs;
+    if(r.QtyDiff<0){w.def_qty+=r.QtyDiff;w.def_val+=r.ValuasiDiff;}
+    else if(r.QtyDiff>0){w.sur_qty+=r.QtyDiff;w.sur_val+=r.ValuasiDiff;}
+  }
+  BY_WH=Object.values(whMap).map(w=>({
+    ...w,
+    net_val:w.def_val+w.sur_val,
+    risk_pct:Math.abs(w.def_val)/(Math.abs(w.def_val)+Math.abs(w.sur_val)||1)*100,
+  })).sort((a,b)=>a.def_val-b.def_val);
+
+  // ── BY_DATE ──
+  const dateMap={};
+  for(const r of RAW){
+    const dk=fmtDateISO(r.PostingDate);
+    if(!dk) continue;
+    if(!dateMap[dk]) dateMap[dk]={date:r.PostingDate,items:0,net_qty:0,net_val:0};
+    dateMap[dk].items++; dateMap[dk].net_qty+=r.QtyDiff; dateMap[dk].net_val+=r.ValuasiDiff;
+  }
+  BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
+
+  // ── BY_USER ──
+  const userMap={};
+  for(const r of PIV){
+    if(!userMap[r.User_Short]) userMap[r.User_Short]={User_Short:r.User_Short,docs:0,items:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
+    const u=userMap[r.User_Short];
+    u.items++; u.docs+=r.Docs;
+    if(r.QtyDiff<0){u.def_qty+=r.QtyDiff;u.def_val+=r.ValuasiDiff;}
+    else if(r.QtyDiff>0){u.sur_qty+=r.QtyDiff;u.sur_val+=r.ValuasiDiff;}
+  }
+  BY_USER=Object.values(userMap);
+
+  // ── TOP DEF / SUR ──
+  TOP_DEF=[...PIV].filter(r=>r.QtyDiff<0).sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff).slice(0,10);
+  TOP_SUR=[...PIV].filter(r=>r.QtyDiff>0).sort((a,b)=>b.ValuasiDiff-a.ValuasiDiff).slice(0,10);
+}
+
+function showDashboard() {
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  // header
+  const netV=TOTALS.netVal;
+  document.getElementById('header-net-val').textContent=
+    (netV<0?'-':'')+fmtRp(Math.abs(netV));
+  document.getElementById('header-meta').innerHTML=
+    `Periode <strong>${fmtDate(TOTALS.minDate)} – ${fmtDate(TOTALS.maxDate)}</strong>`+
+    `<span>·</span>${TOTALS.totalItems} item<span>·</span>${TOTALS.totalDocs} dokumen`;
+  renderTab('ringkasan');
+}
+
+function resetDashboard() {
+  RAW=[]; PIV=[]; BY_WH=[]; BY_DATE=[]; BY_USER=[]; TOP_DEF=[]; TOP_SUR=[];
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('upload-screen').style.display='flex';
+  document.getElementById('file-input').value='';
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTab=tab;
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  const el=document.getElementById('tab-content');
+  el.innerHTML='<div style="color:var(--muted);font-size:13px">Memuat...</div>';
+  setTimeout(()=>{
+    if(tab==='ringkasan') renderRingkasan();
+    else if(tab==='gudang') renderGudang();
+    else if(tab==='trend') renderTrend();
+    else if(tab==='pengguna') renderPengguna();
+    else if(tab==='topitem') renderTopItem();
+    else if(tab==='detail') renderDetail();
+  },10);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: RINGKASAN
+// ═══════════════════════════════════════════════════════════════
+function renderRingkasan() {
+  const el=document.getElementById('tab-content');
+  const nDef=PIV.filter(r=>r.QtyDiff<0).length;
+  const nSur=PIV.filter(r=>r.QtyDiff>0).length;
+  const nNol=PIV.filter(r=>r.QtyDiff===0).length;
+  const t=TOTALS;
+
+  const kpiCards=[
+    {label:'Defisit Valuasi', val:`-${fmtRp(Math.abs(t.totalDefVal))}`, sub:`${nDef} item berkurang`, color:'#ef4444'},
+    {label:'Surplus Valuasi', val:`+${fmtRp(t.totalSurVal)}`, sub:`${nSur} item bertambah`, color:'#22c55e'},
+    {label:'Net Selisih Nilai', val:(t.netVal<0?`-${fmtRp(Math.abs(t.netVal))}`:fmtRp(t.netVal)),
+      sub:'Defisit – Surplus', color:t.netVal<0?'#ef4444':'#22c55e'},
+    {label:'Selisih Qty (Defisit)', val:t.totalDefQty.toLocaleString('id-ID',{maximumFractionDigits:0}),
+      sub:'Unit fisik kurang dari sistem', color:'#f87171'},
+    {label:'Selisih Qty (Surplus)', val:`+${t.totalSurQty.toLocaleString('id-ID',{maximumFractionDigits:0})}`,
+      sub:'Unit fisik lebih dari sistem', color:'#86efac'},
+    {label:'Total Dokumen', val:String(t.totalDocs), sub:'MAT-RECO entries', color:'#818cf8'},
+  ];
+
+  let kpiHtml=`<div class="kpi-grid">`;
+  for(const k of kpiCards) kpiHtml+=`
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color}">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      <div class="kpi-bar" style="background:${k.color}"></div>
+    </div>`;
+  kpiHtml+='</div>';
+
+  // WH Table
+  let whRows='';
+  const whSorted=[...BY_WH].sort((a,b)=>a.def_val-b.def_val);
+  for(const r of whSorted){
+    const net=r.net_val;
+    const nc=net<0?'#ef4444':'#22c55e';
+    const risk=r.risk_pct;
+    const rc=risk>80?'#ef4444':risk>50?'#f59e0b':'#22c55e';
+    whRows+=`<tr>
+      <td style="font-weight:600;color:#e2e8f0">${r.WH_Short}</td>
+      <td style="color:var(--muted)">${r.items}</td>
+      <td style="color:#ef4444;font-weight:700">-${fmtRp(Math.abs(r.def_val))}</td>
+      <td style="color:var(--deficit)">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
+      <td style="color:#22c55e;font-weight:700">+${fmtRp(r.sur_val)}</td>
+      <td style="color:var(--surplus)">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
+      <td style="color:${nc};font-weight:600">${net<0?'-'+fmtRp(Math.abs(net)):fmtRp(net)}</td>
+      <td>
+        <div style="font-size:11px;color:${rc};font-weight:700;margin-bottom:4px">${risk.toFixed(0)}%</div>
+        <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden;width:80px">
+          <div style="width:${Math.min(risk,100).toFixed(0)}%;height:100%;background:${rc};border-radius:3px"></div>
+        </div>
+      </td>
+    </tr>`;
+  }
+  // Total row
+  whRows+=`<tr class="tr-total">
+    <td>TOTAL</td>
+    <td style="color:var(--muted)">${t.totalItems}</td>
+    <td style="color:#ef4444;font-weight:700">-${fmtRp(Math.abs(t.totalDefVal))}</td>
+    <td style="color:var(--deficit)">${t.totalDefQty.toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
+    <td style="color:#22c55e;font-weight:700">+${fmtRp(t.totalSurVal)}</td>
+    <td style="color:var(--surplus)">+${t.totalSurQty.toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
+    <td style="color:${t.netVal<0?'#ef4444':'#22c55e'};font-weight:700">${t.netVal<0?'-'+fmtRp(Math.abs(t.netVal)):fmtRp(t.netVal)}</td>
+    <td style="color:var(--muted)">—</td>
+  </tr>`;
+
+  const whTable=`<div class="card">
+    <div class="section-label">Rekap Selisih per Gudang</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Gudang</th><th>Item</th><th>Defisit Nilai</th><th>Defisit Qty</th>
+        <th>Surplus Nilai</th><th>Surplus Qty</th><th>Net Nilai</th><th>Risk Ratio</th>
+      </tr></thead>
+      <tbody>${whRows}</tbody>
+    </table></div>
+  </div>`;
+
+  // Status bars
+  const statuses=[
+    {label:'Item Defisit (net)',n:nDef,color:'#ef4444'},
+    {label:'Item Surplus (net)',n:nSur,color:'#22c55e'},
+    {label:'Item Nol (net)',n:nNol,color:'#94a3b8'},
+  ];
+  let statusHtml=`<div class="card"><div class="section-label">Distribusi Status Item</div>`;
+  for(const s of statuses){
+    const pct=t.totalItems?(s.n/t.totalItems*100):0;
+    statusHtml+=`
+      <div style="margin-bottom:4px;display:flex;justify-content:space-between">
+        <span style="color:${s.color};font-weight:600;font-size:13px">${s.label}</span>
+        <span style="color:var(--muted);font-size:12px">${s.n} item (${pct.toFixed(1)}%)</span>
+      </div>
+      <div class="status-bar-track" style="margin-bottom:18px">
+        <div class="status-bar-fill" style="width:${pct.toFixed(1)}%;background:${s.color}"></div>
+      </div>`;
+  }
+  statusHtml+='</div>';
+
+  el.innerHTML=kpiHtml+whTable+`<div class="grid-2">
+    <div class="card" id="chart-pie"></div>
+    ${statusHtml}
+  </div>`;
+
+  // Pie chart
+  Plotly.newPlot('chart-pie',[{
+    type:'pie', labels:BY_WH.map(w=>w.WH_Short), values:BY_WH.map(w=>Math.abs(w.def_val)),
+    hole:0.55, marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
+    textinfo:'label+percent', textfont:{size:11},
+    hovertemplate:'%{label}<br>Defisit: Rp %{value:,.0f}<extra></extra>',
+  }],{
+    ...PLOT_LAY, title:{...TITLE_FONT,text:'Proporsi Defisit per Gudang'},
+    annotations:[{text:fmtRp(t.totalDefVal),x:0.5,y:0.5,font:{size:14,color:'#ef4444'},showarrow:false}]
+  },{responsive:true,displayModeBar:false});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: GUDANG
+// ═══════════════════════════════════════════════════════════════
+function renderGudang() {
+  const el=document.getElementById('tab-content');
+
+  let cardsHtml='';
+  BY_WH.forEach((r,i)=>{
+    const c=WH_PAL[i%WH_PAL.length];
+    const risk=r.risk_pct;
+    const rc=risk>80?'#ef4444':'#f59e0b';
+    cardsHtml+=`<div class="card wh-card" style="border-left-color:${c}">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:16px;color:${c}">${r.WH_Short} - PD</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.docs} dokumen · ${r.items} item</div>
+        </div>
+        <div style="text-align:right;margin-right:24px">
+          <div style="font-size:10px;color:var(--muted)">DEFISIT</div>
+          <div style="font-size:15px;font-weight:700;color:#ef4444">-${fmtRp(Math.abs(r.def_val))}</div>
+          <div style="font-size:11px;color:#fca5a5">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
+        </div>
+        <div style="text-align:right;margin-right:24px">
+          <div style="font-size:10px;color:var(--muted)">SURPLUS</div>
+          <div style="font-size:15px;font-weight:700;color:#22c55e">+${fmtRp(r.sur_val)}</div>
+          <div style="font-size:11px;color:#86efac">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted)">RISK RATIO</div>
+          <div style="font-size:18px;font-weight:800;color:${rc}">${risk.toFixed(0)}%</div>
+        </div>
+      </div>
+      <div class="risk-track"><div class="risk-fill" style="width:${risk.toFixed(0)}%;background:${rc}"></div></div>
+    </div>`;
+  });
+
+  el.innerHTML=`<div class="card" id="chart-bar-wh"></div>
+    <div class="section-label" style="margin-bottom:16px">Detail Per Gudang</div>${cardsHtml}`;
+
+  Plotly.newPlot('chart-bar-wh',[
+    {type:'bar',name:'Defisit',x:BY_WH.map(w=>w.WH_Short),y:BY_WH.map(w=>Math.abs(w.def_val)/1e6),
+      marker:{color:C.deficit},hovertemplate:'%{x}<br>Defisit: Rp %{y:.1f} Jt<extra></extra>'},
+    {type:'bar',name:'Surplus',x:BY_WH.map(w=>w.WH_Short),y:BY_WH.map(w=>w.sur_val/1e6),
+      marker:{color:C.surplus},hovertemplate:'%{x}<br>Surplus: Rp %{y:.1f} Jt<extra></extra>'},
+  ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit vs Surplus per Gudang (Juta Rp)'},
+    barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
+  },{responsive:true,displayModeBar:false});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: TREND
+// ═══════════════════════════════════════════════════════════════
+function renderTrend() {
+  const el=document.getElementById('tab-content');
+  el.innerHTML=`<div class="card" id="chart-trend-val"></div>
+    <div class="card" id="chart-trend-vol"></div>
+    <div class="card warn-box" id="trend-kritis"></div>`;
+
+  const labels=BY_DATE.map(d=>fmtDateShort(d.date));
+  const colors=BY_DATE.map(d=>d.net_val<0?C.deficit:C.surplus);
+
+  Plotly.newPlot('chart-trend-val',[{
+    type:'scatter',mode:'lines+markers',
+    x:labels,y:BY_DATE.map(d=>d.net_val/1e6),
+    name:'Net Valuasi',
+    line:{color:C.neutral,width:2.5},
+    marker:{color:colors,size:8,line:{color:'#0f172a',width:2}},
+    hovertemplate:'%{x}<br>Net: Rp %{y:.1f} Jt<extra></extra>',
+  }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Trend Net Selisih Valuasi per Tanggal (Juta Rp)'},
+    shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],
+    yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
+  },{responsive:true,displayModeBar:false});
+
+  Plotly.newPlot('chart-trend-vol',[{
+    type:'bar',x:labels,y:BY_DATE.map(d=>d.items),
+    marker:{color:C.neutral},
+    hovertemplate:'%{x}<br>%{y} item<extra></extra>',name:'Jumlah Item',
+  }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Volume Item per Tanggal'},
+    yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
+  },{responsive:true,displayModeBar:false});
+
+  // Kritis
+  const kritis=[...BY_DATE].sort((a,b)=>a.net_val-b.net_val).slice(0,3);
+  let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span style="color:var(--warn)">▲</span>
+    <span style="font-size:12px;font-weight:700;color:var(--warn);letter-spacing:0.5px">Temuan Kritis</span>
+  </div>`;
+  for(const k of kritis){
+    kritisHtml+=`<div style="margin-bottom:8px;font-size:13px;color:#94a3b8">
+      <span style="color:var(--warn);margin-right:6px">·</span>
+      ${fmtDateShort(k.date)}: ${k.items} item, net valuasi ${k.net_val<0?'-Rp '+fmtRp(Math.abs(k.net_val)):'Rp '+fmtRp(k.net_val)}
+    </div>`;
+  }
+  document.getElementById('trend-kritis').innerHTML=kritisHtml;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: PENGGUNA
+// ═══════════════════════════════════════════════════════════════
+function renderPengguna() {
+  const el=document.getElementById('tab-content');
+  let cardsHtml='<div class="user-grid">';
+  const totDef=TOTALS.totalDefVal||1;
+
+  BY_USER.forEach((r,i)=>{
+    const c=WH_PAL[i%WH_PAL.length];
+    const pct=Math.abs(r.def_val)/Math.abs(totDef)*100;
+    cardsHtml+=`<div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div class="user-avatar" style="background:${c}30;border-color:${c};color:${c}">${r.User_Short[0].toUpperCase()}</div>
+        <div>
+          <div style="font-weight:700;color:${c};font-size:13px">${r.User_Short}</div>
+          <div style="font-size:11px;color:var(--muted)">${r.docs} dok · ${r.items} item</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div class="stat-mini">
+          <div class="stat-mini-label">DEFISIT QTY</div>
+          <div class="stat-mini-val" style="color:#ef4444">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-label">SURPLUS QTY</div>
+          <div class="stat-mini-val" style="color:#22c55e">${r.sur_qty>0?'+':''}${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${pct.toFixed(1)}% dari total</div>
+      <div style="background:#334155;border-radius:4px;height:7px;overflow:hidden;margin-bottom:6px">
+        <div style="width:${Math.min(pct,100).toFixed(1)}%;height:100%;background:${c};border-radius:4px"></div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:#ef4444">${r.def_val<0?'-'+fmtRp(Math.abs(r.def_val)):fmtRp(r.def_val)}</div>
+    </div>`;
+  });
+  cardsHtml+='</div>';
+
+  el.innerHTML=`<div class="card" id="chart-user"></div>${cardsHtml}`;
+
+  Plotly.newPlot('chart-user',[{
+    type:'bar',orientation:'h',
+    x:BY_USER.map(u=>Math.abs(u.def_val)/1e6),
+    y:BY_USER.map(u=>u.User_Short),
+    marker:{color:WH_PAL.slice(0,BY_USER.length)},
+    hovertemplate:'%{y}<br>Defisit: Rp %{x:.1f} Jt<extra></extra>',
+    name:'Defisit Valuasi',
+  }],{...PLOT_LAY,
+    title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},
+    margin:{l:120,r:20,t:40,b:50},
+    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'}
+  },{responsive:true,displayModeBar:false});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: TOP ITEM
+// ═══════════════════════════════════════════════════════════════
+function renderTopItem() {
+  const el=document.getElementById('tab-content');
+  el.innerHTML=`<div class="card" id="chart-top-def"></div><div class="card" id="chart-top-sur"></div>`;
+
+  const defLabels=TOP_DEF.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
+  Plotly.newPlot('chart-top-def',[{
+    type:'bar',orientation:'h',
+    x:TOP_DEF.map(r=>Math.abs(r.ValuasiDiff)/1e6),
+    y:defLabels,
+    marker:{color:C.deficit},
+    text:TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),
+    textposition:'inside',
+    customdata:TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
+    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.1f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+  }],{...PLOT_LAY,
+    title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},
+    yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
+    margin:{l:280,r:20,t:40,b:50},
+    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
+    height:420,
+  },{responsive:true,displayModeBar:false});
+
+  const surLabels=TOP_SUR.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
+  Plotly.newPlot('chart-top-sur',[{
+    type:'bar',orientation:'h',
+    x:TOP_SUR.map(r=>r.ValuasiDiff/1e6),
+    y:surLabels,
+    marker:{color:C.surplus},
+    text:TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),
+    textposition:'inside',
+    customdata:TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
+    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.1f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+  }],{...PLOT_LAY,
+    title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},
+    yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
+    margin:{l:280,r:20,t:40,b:50},
+    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
+    height:420,
+  },{responsive:true,displayModeBar:false});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: DATA DETAIL
+// ═══════════════════════════════════════════════════════════════
+function renderDetail() {
+  const el=document.getElementById('tab-content');
+  const whOpts=['<option value="">Semua Gudang</option>',
+    ...[...new Set(RAW.map(r=>r.WH_Short))].sort().map(w=>`<option value="${w}">${w}</option>`)
+  ].join('');
+
+  el.innerHTML=`
+    <div class="info-banner"><strong>Data Akumulasi per Item</strong> — 1 baris = 1 item unik (ItemCode + Gudang).
+      Item yang sama di beberapa dokumen digabung & dijumlahkan. Klik baris untuk detail.</div>
+    <div id="detail-summary" class="summary-row"></div>
+    <div class="filter-row">
+      <select id="dd-wh" onchange="applyDetailFilter()">${whOpts}</select>
+      <select id="dd-tipe" onchange="applyDetailFilter()">
+        <option value="">Semua Tipe</option>
+        <option value="Defisit">Defisit</option>
+        <option value="Surplus">Surplus</option>
+      </select>
+      <input type="text" id="inp-search" placeholder="Cari item / kode..." oninput="applyDetailFilter()">
+      <button class="btn-export" onclick="exportDetail()">↓ Export Excel</button>
+    </div>
+    <div class="pagesize-row">
+      <span>Tampilkan:</span>
+      ${[20,50,100,500].map(n=>`<button class="ps-btn${n===50?' active':''}" onclick="setPageSize(${n},this)">${n}</button>`).join('')}
+      <span>baris/halaman</span>
+    </div>
+    <div id="detail-table-wrap"></div>
+    <div id="detail-pagination" class="pagination"></div>`;
+
+  applyDetailFilter();
+}
+
+function applyDetailFilter() {
+  const wh=document.getElementById('dd-wh')?.value||'';
+  const tipe=document.getElementById('dd-tipe')?.value||'';
+  const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
+
+  let data=[...PIV];
+  if(wh) data=data.filter(r=>r.WH_Short===wh);
+  if(tipe) data=data.filter(r=>r.Tipe===tipe);
+  if(search) data=data.filter(r=>
+    (r.ItemName||'').toLowerCase().includes(search)||
+    (r.ItemCode||'').toLowerCase().includes(search)
+  );
+  if(detailSort.col) {
+    data.sort((a,b)=>{
+      let va=a[detailSort.col], vb=b[detailSort.col];
+      if(typeof va==='string') va=va.toLowerCase(), vb=vb.toLowerCase();
+      return detailSort.asc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+    });
+  } else {
+    data.sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff);
+  }
+  detailFiltered=data;
+  detailPage=1;
+  renderDetailSummary();
+  renderDetailTable();
+}
+
+function renderDetailSummary() {
+  const d=detailFiltered;
+  const nDocs=new Set(RAW.filter(r=>{
+    const wh=document.getElementById('dd-wh')?.value||'';
+    const tipe=document.getElementById('dd-tipe')?.value||'';
+    const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
+    return (!wh||r.WH_Short===wh)&&
+           (!tipe||r.Tipe===tipe)&&
+           (!search||(r.ItemName||'').toLowerCase().includes(search)||(r.ItemCode||'').toLowerCase().includes(search));
+  }).map(r=>r.ID)).size;
+  const defVal=d.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  const surVal=d.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  const net=defVal+surVal;
+  const el=document.getElementById('detail-summary');
+  if(!el) return;
+  el.innerHTML=[
+    {label:'Item Unik',val:d.length.toLocaleString('id-ID'),color:'#f1f5f9'},
+    {label:'Dokumen Sumber',val:nDocs.toLocaleString('id-ID'),color:'#818cf8'},
+    {label:'Total Defisit',val:(defVal<0?'-':'')+fmtRp(Math.abs(defVal)),color:'#ef4444'},
+    {label:'Total Surplus',val:surVal>0?'+'+fmtRp(surVal):fmtRp(surVal),color:'#22c55e'},
+    {label:'Net Valuasi',val:(net<0?'-':net>0?'+':'')+fmtRp(Math.abs(net)),color:net<0?'#ef4444':'#22c55e'},
+  ].map(m=>`<div class="mini-card"><div class="mini-label">${m.label}</div>
+    <div class="mini-val" style="color:${m.color}">${m.val}</div></div>`).join('');
+}
+
+function setPageSize(n, btn) {
+  document.querySelectorAll('.ps-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  detailPageSize=n; detailPage=1;
+  renderDetailTable();
+}
+
+const DETAIL_COLS=[
+  {key:'ItemCode',label:'Kode',w:'100px'},
+  {key:'ItemName',label:'Nama Item',w:'200px'},
+  {key:'WH_Short',label:'Gudang',w:'90px'},
+  {key:'User_Short',label:'Pengguna',w:'90px'},
+  {key:'QtyDiff',label:'Sel. Qty',w:'75px',num:true},
+  {key:'CurrentQty',label:'Qty Sistem',w:'80px',num:true},
+  {key:'Quantity',label:'Qty Fisik',w:'75px',num:true},
+  {key:'ValRate',label:'Hrg Pokok',w:'100px',num:true,rp:true},
+  {key:'ValuasiDiff',label:'Sel. Nilai',w:'115px',num:true,rp:true},
+  {key:'Docs',label:'Dok',w:'50px',num:true},
+  {key:'TanggalAwal',label:'Tgl Awal',w:'85px',date:true},
+  {key:'TanggalAkhir',label:'Tgl Akhir',w:'85px',date:true},
+  {key:'Tipe',label:'Tipe',w:'65px'},
+];
+
+function sortDetail(col) {
+  if(detailSort.col===col) detailSort.asc=!detailSort.asc;
+  else { detailSort.col=col; detailSort.asc=true; }
+  applyDetailFilter();
+}
+
+function renderDetailTable() {
+  const wrap=document.getElementById('detail-table-wrap');
+  const pgEl=document.getElementById('detail-pagination');
+  if(!wrap) return;
+  const start=(detailPage-1)*detailPageSize;
+  const page=detailFiltered.slice(start,start+detailPageSize);
+  const totalPages=Math.max(1,Math.ceil(detailFiltered.length/detailPageSize));
+
+  let thead=`<thead><tr>`;
+  for(const col of DETAIL_COLS){
+    const arrow=detailSort.col===col.key?(detailSort.asc?' ▲':' ▼'):'';
+    thead+=`<th style="min-width:${col.w};${col.num?'text-align:right':''}" onclick="sortDetail('${col.key}')">${col.label}${arrow}</th>`;
+  }
+  thead+=`</tr></thead>`;
+
+  let tbody='<tbody>';
+  page.forEach((r,ri)=>{
+    const rowBg=(ri%2===1)?'background:#0b1120':'';
+    let tipeColor=r.Tipe==='Defisit'?C.deficit:r.Tipe==='Surplus'?C.surplus:C.muted;
+    tbody+=`<tr class="data-tbl-row" style="${rowBg}" onclick="showModal(${PIV.indexOf(r)})">`;
+    for(const col of DETAIL_COLS){
+      let val=r[col.key];
+      let style=col.num?'text-align:right':'';
+      let display='';
+      if(col.date) display=fmtDateISO(val);
+      else if(col.rp) { display=smartNum(Math.abs(val)); style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted); }
+      else if(col.num) { display=smartNum(val); style+=';color:'+(col.key==='QtyDiff'||col.key==='ValuasiDiff'?(val<0?C.deficit:val>0?C.surplus:C.muted):'#cbd5e1'); }
+      else if(col.key==='Tipe') { display=val; style+=`;color:${tipeColor};font-weight:600`; }
+      else display=val||'';
+      tbody+=`<td style="font-size:12px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:${col.w};${style}">${display}</td>`;
+    }
+    tbody+='</tr>';
+  });
+  tbody+='</tbody>';
+
+  wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    ${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail
+  </div>
+  <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+    <table class="data-tbl" style="width:100%;border-collapse:collapse">${thead}${tbody}</table>
+  </div>`;
+
+  if(pgEl) pgEl.innerHTML=`
+    <button class="page-btn" onclick="goPage(1)" ${detailPage===1?'disabled':''}>«</button>
+    <button class="page-btn" onclick="goPage(${detailPage-1})" ${detailPage===1?'disabled':''}>‹</button>
+    <span class="page-info">Hal ${detailPage} / ${totalPages}</span>
+    <button class="page-btn" onclick="goPage(${detailPage+1})" ${detailPage>=totalPages?'disabled':''}>›</button>
+    <button class="page-btn" onclick="goPage(${totalPages})" ${detailPage>=totalPages?'disabled':''}>»</button>
+    <span style="margin-left:8px">(${detailFiltered.length} total)</span>`;
+}
+
+function goPage(p) {
+  const total=Math.max(1,Math.ceil(detailFiltered.length/detailPageSize));
+  detailPage=Math.max(1,Math.min(p,total));
+  renderDetailTable();
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────
+function exportDetail() {
+  const data=detailFiltered.map(r=>({
+    'Kode':r.ItemCode,'Nama Item':r.ItemName,'Gudang':r.WH_Short,'Pengguna':r.User_Short,
+    'Sel. Qty':r.QtyDiff,'Qty Sistem':r.CurrentQty,'Qty Fisik':r.Quantity,
+    'Hrg Pokok':r.ValRate,'Sel. Nilai':r.ValuasiDiff,'Jml Dok':r.Docs,
+    'Tgl Awal':fmtDateISO(r.TanggalAwal),'Tgl Akhir':fmtDateISO(r.TanggalAkhir),'Tipe':r.Tipe,
+  }));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Akumulasi');
+  XLSX.writeFile(wb,'stock_akumulasi_filtered.xlsx');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL DETAIL
+// ═══════════════════════════════════════════════════════════════
+function showModal(idx) {
+  const r=PIV[idx];
+  if(!r) return;
+  const accent=r.Tipe==='Defisit'?'#ef4444':'#22c55e';
+  const tipeBg=r.Tipe==='Defisit'?'#ef444418':'#22c55e18';
+
+  // Source documents
+  const docs=RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
+    .sort((a,b)=>b.PostingDate-a.PostingDate);
+
+  let docRows='';
+  docs.forEach((d,i)=>{
+    const bg=i%2===0?'#0b1120':C.card2;
+    const qc=d.QtyDiff<0?'#ef4444':d.QtyDiff>0?'#34d399':C.muted;
+    const vc=d.ValuasiDiff<0?'#ef4444':d.ValuasiDiff>0?'#34d399':C.muted;
+    const tc=d.Tipe==='Defisit'?'#ef4444':d.Tipe==='Surplus'?'#34d399':C.muted;
+    docRows+=`<tr style="background:${bg}">
+      <td style="color:#93c5fd;font-family:monospace;font-size:10px;padding:7px 10px">${d.ID}</td>
+      <td style="padding:7px 10px;font-size:11px">${fmtDateISO(d.PostingDate)}</td>
+      <td style="padding:7px 10px;font-size:11px;color:#94a3b8">${d.User_Short}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px">${smartNum(d.CurrentQty)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px">${smartNum(d.Quantity)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${qc};font-weight:600">${smartSigned(d.QtyDiff)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${vc};font-weight:600">${smartRpSigned(d.ValuasiDiff)}</td>
+      <td style="padding:7px 10px;font-size:11px;color:${tc};font-weight:600">${d.Tipe}</td>
+    </tr>`;
+  });
+
+  document.getElementById('modal-panel').innerHTML=`
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${accent};display:inline-block"></span>
+        <span style="font-weight:600;font-size:13px;color:#e2e8f0">Detail Item</span>
+        <span style="font-size:12px;color:var(--muted)">— ${r.ItemCode}</span>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="cell-grid" style="margin-bottom:8px">
+      ${dc('Kode Item',r.ItemCode,'#93c5fd')}
+      ${dc('Gudang',r.WH_Short,'#f1f5f9')}
+      ${dc('Pengguna',r.User_Short,'#f1f5f9')}
+      ${dc('Tgl Awal',fmtDateISO(r.TanggalAwal),'#94a3b8')}
+      ${dc('Tgl Akhir',fmtDateISO(r.TanggalAkhir),'#94a3b8')}
+      ${dc('Jml Dokumen',String(r.Docs),'#818cf8')}
+      <div class="detail-cell">
+        <div class="detail-cell-label">TIPE</div>
+        <span class="tipe-badge" style="background:${tipeBg};border:1px solid ${accent}50;color:${accent}">${r.Tipe}</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:8px">
+      <div class="detail-cell" style="flex:none">
+        <div class="detail-cell-label">NAMA ITEM</div>
+        <div class="detail-cell-val" style="font-weight:600">${r.ItemName}</div>
+      </div>
+    </div>
+
+    <div class="cell-grid" style="margin-bottom:16px">
+      ${dc('Qty Sistem',smartNum(r.CurrentQty||0),'#f1f5f9')}
+      ${dc('Qty Fisik',smartNum(r.Quantity||0),'#f1f5f9')}
+      <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
+        <div class="detail-cell-label">SEL. QTY (NET)</div>
+        <div class="detail-cell-val" style="color:${accent}">${smartSigned(r.QtyDiff)}</div>
+      </div>
+      ${dc('Hrg Pokok',smartRp(r.ValRate),'#94a3b8')}
+      <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
+        <div class="detail-cell-label">SEL. NILAI (NET)</div>
+        <div class="detail-cell-val" style="color:${accent}">${smartRpSigned(r.ValuasiDiff)}</div>
+      </div>
+    </div>
+
+    <div class="docs-section">
+      <div class="docs-title">📄 Dokumen Sumber <span style="font-weight:400;color:var(--muted)">${docs.length} dokumen</span></div>
+      <div class="docs-scroll">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">No. Dokumen</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">Tanggal</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">Pengguna</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Qty Sistem</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Qty Fisik</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Sel. Qty</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Sel. Nilai</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border)">Tipe</th>
+          </tr></thead>
+          <tbody>${docRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function dc(label,val,color='#e2e8f0') {
+  return `<div class="detail-cell"><div class="detail-cell-label">${label}</div>
+    <div class="detail-cell-val" style="color:${color}">${val}</div></div>`;
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalIfOverlay(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
