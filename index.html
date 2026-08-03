@@ -96,14 +96,12 @@
     letter-spacing: 0.3px; transition: color 0.15s; flex-shrink: 0; white-space: nowrap; }
   .btn-reset:hover { color: var(--text); }
 
-  /* ── DATE FILTER BAR — REDESIGNED ── */
+  /* ── DATE FILTER BAR ── */
   #date-filter-bar {
     background: var(--card2);
     border-bottom: 1px solid var(--border);
     padding: 0;
   }
-
-  /* Inner wrapper — scrollable on mobile */
   .dfb-inner {
     display: flex;
     align-items: stretch;
@@ -112,8 +110,6 @@
     scrollbar-width: none;
   }
   .dfb-inner::-webkit-scrollbar { display: none; }
-
-  /* Section dividers */
   .dfb-section {
     display: flex;
     align-items: center;
@@ -123,14 +119,11 @@
     border-right: 1px solid var(--border);
   }
   .dfb-section:last-child { border-right: none; }
-
   .dfb-label {
     font-size: 9px; font-weight: 700; color: var(--muted);
     text-transform: uppercase; letter-spacing: 1.6px;
     white-space: nowrap;
   }
-
-  /* Date range inputs — side by side, compact */
   .dfb-range {
     display: flex; align-items: center; gap: 6px;
   }
@@ -160,8 +153,6 @@
   .dfb-sep {
     font-size: 14px; color: var(--border); flex-shrink: 0;
   }
-
-  /* Quick preset buttons */
   .dfb-presets {
     display: flex; gap: 4px;
   }
@@ -176,8 +167,6 @@
     background: #818cf820; border-color: var(--neutral);
     color: var(--neutral);
   }
-
-  /* Status section — right side, expands */
   .dfb-status {
     display: flex; align-items: center; gap: 10px;
     padding: 0 14px; flex: 1; justify-content: flex-end;
@@ -197,18 +186,9 @@
   .btn-clear-date.visible { display: block; }
   .btn-clear-date:hover { border-color: var(--deficit); color: var(--deficit); }
 
-  /* Mobile: stack date filter into 2 rows */
   @media (max-width: 640px) {
-    .dfb-inner {
-      flex-wrap: wrap;
-      overflow-x: visible;
-    }
-    .dfb-section {
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-      width: 100%;
-      padding: 10px 12px;
-    }
+    .dfb-inner { flex-wrap: wrap; overflow-x: visible; }
+    .dfb-section { border-right: none; border-bottom: 1px solid var(--border); width: 100%; padding: 10px 12px; }
     .dfb-section:last-child { border-bottom: none; }
     .dfb-range { width: 100%; justify-content: space-between; }
     .dfb-date-wrap { flex: 1; }
@@ -448,16 +428,12 @@
     <button class="btn-reset" onclick="resetDashboard()">↩ Ganti File</button>
   </div>
 
-  <!-- DATE FILTER BAR — REDESIGNED -->
+  <!-- DATE FILTER BAR -->
   <div id="date-filter-bar">
     <div class="dfb-inner">
-
-      <!-- Section 1: Label -->
       <div class="dfb-section" style="padding:0 12px 0 16px">
         <span class="dfb-label">Filter Tanggal</span>
       </div>
-
-      <!-- Section 2: Date range pickers -->
       <div class="dfb-section">
         <div class="dfb-range">
           <div class="dfb-date-wrap">
@@ -471,8 +447,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Section 3: Quick presets -->
       <div class="dfb-section">
         <div class="dfb-presets">
           <button class="dq-btn active" data-preset="all">Semua</button>
@@ -483,13 +457,10 @@
           <button class="dq-btn" data-preset="ytd">Tahun Ini</button>
         </div>
       </div>
-
-      <!-- Section 4: Status + reset -->
       <div class="dfb-status">
         <span id="dfb-count"></span>
         <button class="btn-clear-date" id="btn-clear-date" onclick="applyDateFilter(null,null,'all')">✕ Reset</button>
       </div>
-
     </div>
   </div>
 
@@ -534,33 +505,27 @@ let TOTALS={};
 let currentTab='ringkasan';
 
 // ── DATE FILTER STATE ─────────────────────────────────────────
-let DATE_FROM = null; // Date object or null
-let DATE_TO   = null; // Date object or null
-let ACTIVE_PRESET = 'all'; // tracks which quick button is active
+let DATE_FROM = null;
+let DATE_TO   = null;
+let ACTIVE_PRESET = 'all';
 
-// Filtered slices (rebuilt on each filter change)
 let F_RAW=[], F_PIV=[], F_BY_WH=[], F_BY_DATE=[], F_BY_USER=[];
 let F_TOP_DEF=[], F_TOP_SUR=[], F_TOTALS={};
 
-// detail tab state
 let detailFiltered=[], detailPage=1, detailPageSize=50, detailSort={col:null,asc:true};
 
-// ── HELPERS ───────────────────────────────────────────────────
-function fmtRp(v) {
-  v = Math.abs(v);
-  if(v>=1e9) return `Rp ${(v/1e9).toFixed(2)} M`;
-  if(v>=1e6) return `Rp ${(v/1e6).toFixed(1)} Jt`;
-  if(v>=1e3) return `Rp ${(v/1e3).toFixed(0)} Rb`;
-  return `Rp ${v.toFixed(0)}`;
-}
+// ── NUMBER FORMATTING (FIXED) ─────────────────────────────────
+// Format: titik untuk pemisah ribuan, koma untuk desimal, max 2 digit desimal
 function smartNum(v) {
   v = parseFloat(v);
-  if(isNaN(v)) return '—';
-  if(Number.isInteger(v) || Math.abs(v - Math.round(v)) < 1e-9)
-    return Math.round(v).toLocaleString('id-ID');
-  let s = v.toFixed(4).replace(/\.?0+$/,'');
-  let [i,d] = s.split('.');
-  return parseInt(i).toLocaleString('id-ID') + (d?'.'+d:'');
+  if (isNaN(v)) return '—';
+  // Bulatkan ke maks 2 desimal
+  const rounded = Math.round(v * 100) / 100;
+  if (Number.isInteger(rounded)) {
+    return rounded.toLocaleString('id-ID');
+  }
+  // Hapus trailing zero: 34.10 → 34,1 | 34.854.10 → 34.854,1
+  return rounded.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 function smartSigned(v) {
   const n = smartNum(Math.abs(v));
@@ -573,6 +538,15 @@ function smartRp(v) {
 function smartRpSigned(v) {
   const n = smartNum(Math.abs(v));
   return v<0?`-Rp ${n}`:v>0?`+Rp ${n}`:`Rp ${n}`;
+}
+
+// ── OTHER HELPERS ─────────────────────────────────────────────
+function fmtRp(v) {
+  v = Math.abs(v);
+  if(v>=1e9) return `Rp ${(v/1e9).toFixed(2)} M`;
+  if(v>=1e6) return `Rp ${(v/1e6).toFixed(1)} Jt`;
+  if(v>=1e3) return `Rp ${(v/1e3).toFixed(0)} Rb`;
+  return `Rp ${v.toFixed(0)}`;
 }
 function fmtDate(d) {
   if(!d || isNaN(new Date(d).getTime())) return '—';
@@ -594,98 +568,49 @@ function toDateOnly(d) {
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DATE FILTER — SINGLE ENTRY POINT
-// All date changes go through applyDateFilter()
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Master date filter function.
- * @param {Date|null} from
- * @param {Date|null} to
- * @param {string} preset  — key for active preset button, or 'custom'
- */
+// ── DATE FILTER ───────────────────────────────────────────────
 function applyDateFilter(from, to, preset) {
   DATE_FROM = from ? toDateOnly(from) : null;
   DATE_TO   = to   ? toDateOnly(to)   : null;
   ACTIVE_PRESET = preset || 'custom';
-
-  // Sync inputs
   document.getElementById('df-from').value = DATE_FROM ? fmtDateISO(DATE_FROM) : '';
   document.getElementById('df-to').value   = DATE_TO   ? fmtDateISO(DATE_TO)   : '';
-
-  // Sync preset buttons
   document.querySelectorAll('.dq-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === ACTIVE_PRESET);
   });
-
-  // Rebuild filtered data
   rebuildFiltered();
-
-  // Update UI indicators
   updateFilterStatusUI();
-
-  // Re-render current tab
   renderTab(currentTab);
 }
 
-// Called when user manually types in a date input
 function onDateInputChange() {
   const fromVal = document.getElementById('df-from').value;
   const toVal   = document.getElementById('df-to').value;
   const from = fromVal ? new Date(fromVal+'T00:00:00') : null;
   const to   = toVal   ? new Date(toVal+'T00:00:00')   : null;
-
-  // If both cleared → reset to "all"
-  if(!from && !to) {
-    applyDateFilter(null, null, 'all');
-    return;
-  }
-
-  // Mark as custom (no preset active)
+  if(!from && !to) { applyDateFilter(null, null, 'all'); return; }
   DATE_FROM = from ? toDateOnly(from) : null;
   DATE_TO   = to   ? toDateOnly(to)   : null;
   ACTIVE_PRESET = 'custom';
-
   document.querySelectorAll('.dq-btn').forEach(btn => btn.classList.remove('active'));
-
   rebuildFiltered();
   updateFilterStatusUI();
   renderTab(currentTab);
 }
 
-// Called when a preset button is clicked
 function onPresetClick(preset) {
   const today = toDateOnly(new Date());
   const maxDate = TOTALS.maxDate ? toDateOnly(TOTALS.maxDate) : today;
   const minDate = TOTALS.minDate ? toDateOnly(TOTALS.minDate) : today;
-
   let from = null, to = null;
-
-  if(preset === 'all') {
-    from = null; to = null;
-  } else if(preset === '7d') {
-    to = maxDate;
-    from = new Date(maxDate); from.setDate(from.getDate() - 6);
-  } else if(preset === '30d') {
-    to = maxDate;
-    from = new Date(maxDate); from.setDate(from.getDate() - 29);
-  } else if(preset === 'mtd') {
-    to = maxDate;
-    from = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-  } else if(preset === 'q') {
-    to = maxDate;
-    const qStart = Math.floor(maxDate.getMonth() / 3) * 3;
-    from = new Date(maxDate.getFullYear(), qStart, 1);
-  } else if(preset === 'ytd') {
-    to = maxDate;
-    from = new Date(maxDate.getFullYear(), 0, 1);
-  }
-
-  // Clamp to data range
+  if(preset === 'all') { from = null; to = null; }
+  else if(preset === '7d') { to = maxDate; from = new Date(maxDate); from.setDate(from.getDate() - 6); }
+  else if(preset === '30d') { to = maxDate; from = new Date(maxDate); from.setDate(from.getDate() - 29); }
+  else if(preset === 'mtd') { to = maxDate; from = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1); }
+  else if(preset === 'q') { to = maxDate; const qStart = Math.floor(maxDate.getMonth() / 3) * 3; from = new Date(maxDate.getFullYear(), qStart, 1); }
+  else if(preset === 'ytd') { to = maxDate; from = new Date(maxDate.getFullYear(), 0, 1); }
   if(from && minDate && from < minDate) from = minDate;
   if(to   && maxDate && to   > maxDate) to   = maxDate;
-
   applyDateFilter(from, to, preset);
 }
 
@@ -693,7 +618,6 @@ function updateFilterStatusUI() {
   const isFiltered = !!(DATE_FROM || DATE_TO);
   const countEl    = document.getElementById('dfb-count');
   const clearBtn   = document.getElementById('btn-clear-date');
-
   if(isFiltered) {
     const pct = RAW.length ? Math.round(F_RAW.length/RAW.length*100) : 0;
     countEl.textContent  = `⚡ ${F_RAW.length.toLocaleString('id-ID')} / ${RAW.length.toLocaleString('id-ID')} baris (${pct}%)`;
@@ -704,12 +628,9 @@ function updateFilterStatusUI() {
     countEl.classList.remove('active');
     clearBtn.classList.remove('visible');
   }
-
-  // Update header net val
   const netV = F_TOTALS.netVal || 0;
   document.getElementById('header-net-val').textContent =
     (netV<0?'-':'')+fmtRp(Math.abs(netV));
-
   const minD = F_TOTALS.minDate, maxD = F_TOTALS.maxDate;
   const filterNote = isFiltered
     ? ` <span style="color:var(--warn);font-weight:600">·⚡ difilter</span>` : '';
@@ -718,30 +639,21 @@ function updateFilterStatusUI() {
     `<span>·</span>${F_TOTALS.totalItems||0} item<span>·</span>${F_TOTALS.totalDocs||0} dokumen${filterNote}`;
 }
 
-// ── BIND DATE INPUTS (event: input + change both) ────────────
-// Using 'input' fires on every keystroke; 'change' fires on blur/confirm
-// We debounce so rapid typing doesn't trigger 10 redraws
 let dateDebounce = null;
 function scheduleDateInputChange() {
   clearTimeout(dateDebounce);
   dateDebounce = setTimeout(onDateInputChange, 350);
 }
 
-// ── PRESET BUTTONS — delegate via data-preset ────────────────
 document.querySelectorAll('.dq-btn').forEach(btn => {
   btn.addEventListener('click', () => onPresetClick(btn.dataset.preset));
 });
-
-// ── DATE INPUT EVENTS ────────────────────────────────────────
 ['df-from','df-to'].forEach(id => {
   const el = document.getElementById(id);
-  // 'change' fires when user picks from calendar widget
   el.addEventListener('change', onDateInputChange);
-  // 'input' fires when user types directly
   el.addEventListener('input', scheduleDateInputChange);
 });
 
-// ── ROW DATE FILTER ───────────────────────────────────────────
 function rowInDateRange(r) {
   if(!DATE_FROM && !DATE_TO) return true;
   const d = toDateOnly(r.PostingDate);
@@ -751,10 +663,8 @@ function rowInDateRange(r) {
   return true;
 }
 
-// ── REBUILD FILTERED DATA ─────────────────────────────────────
 function rebuildFiltered() {
   F_RAW = RAW.filter(rowInDateRange);
-
   const pivMap={};
   for(const r of F_RAW){
     const key=`${r.ItemCode}|||${r.WH_Short}|||${r.User_Short}`;
@@ -779,7 +689,6 @@ function rebuildFiltered() {
     Docs: p.docs.size,
     Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
   }));
-
   F_TOTALS.totalItems=F_PIV.length;
   F_TOTALS.totalDocs=new Set(F_RAW.map(r=>r.ID)).size;
   F_TOTALS.totalDefVal=F_PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
@@ -789,7 +698,6 @@ function rebuildFiltered() {
   F_TOTALS.netVal=F_TOTALS.totalDefVal+F_TOTALS.totalSurVal;
   F_TOTALS.minDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
   F_TOTALS.maxDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
-
   const whMap={};
   for(const r of F_PIV){
     if(!whMap[r.WH_Short]) whMap[r.WH_Short]={WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
@@ -803,7 +711,6 @@ function rebuildFiltered() {
     net_val:w.def_val+w.sur_val,
     risk_pct:Math.abs(w.def_val)/(Math.abs(w.def_val)+Math.abs(w.sur_val)||1)*100,
   })).sort((a,b)=>a.def_val-b.def_val);
-
   const dateMap={};
   for(const r of F_RAW){
     if(!r.PostingDate) continue;
@@ -813,7 +720,6 @@ function rebuildFiltered() {
     dateMap[dk].items++; dateMap[dk].net_qty+=r.QtyDiff; dateMap[dk].net_val+=r.ValuasiDiff;
   }
   F_BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
-
   const userMap={};
   for(const r of F_PIV){
     if(!userMap[r.User_Short]) userMap[r.User_Short]={User_Short:r.User_Short,docs:0,items:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
@@ -823,7 +729,6 @@ function rebuildFiltered() {
     else if(r.QtyDiff>0){u.sur_qty+=r.QtyDiff;u.sur_val+=r.ValuasiDiff;}
   }
   F_BY_USER=Object.values(userMap);
-
   F_TOP_DEF=[...F_PIV].filter(r=>r.QtyDiff<0).sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff).slice(0,10);
   F_TOP_SUR=[...F_PIV].filter(r=>r.QtyDiff>0).sort((a,b)=>b.ValuasiDiff-a.ValuasiDiff).slice(0,10);
 }
@@ -942,7 +847,6 @@ function buildAggregates() {
     Docs: p.docs.size,
     Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
   }));
-
   TOTALS.totalItems=PIV.length;
   TOTALS.totalDocs=new Set(RAW.map(r=>r.ID)).size;
   TOTALS.totalDefVal=PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
@@ -955,21 +859,17 @@ function buildAggregates() {
 }
 
 function initDateFilter() {
-  // Set min/max attributes on inputs based on data range
   const minISO = fmtDateISO(TOTALS.minDate);
   const maxISO = fmtDateISO(TOTALS.maxDate);
   const fromEl = document.getElementById('df-from');
   const toEl   = document.getElementById('df-to');
   if(minISO) { fromEl.min = minISO; toEl.min = minISO; }
   if(maxISO) { fromEl.max = maxISO; toEl.max = maxISO; }
-
-  // Start with "all" — no filter
   DATE_FROM = null; DATE_TO = null; ACTIVE_PRESET = 'all';
   fromEl.value = ''; toEl.value = '';
   document.querySelectorAll('.dq-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === 'all');
   });
-
   rebuildFiltered();
 }
 
@@ -1010,7 +910,6 @@ function renderTab(tab) {
   },10);
 }
 
-// ── FILTER NOTICE BANNER ─────────────────────────────────────
 function filterBannerHTML() {
   if(!DATE_FROM && !DATE_TO) return '';
   const parts=[];
@@ -1149,7 +1048,6 @@ function renderRingkasan() {
 // ═══════════════════════════════════════════════════════════════
 function renderGudang() {
   const el=document.getElementById('tab-content');
-
   let cardsHtml='';
   F_BY_WH.forEach((r,i)=>{
     const c=WH_PAL[i%WH_PAL.length];
@@ -1179,13 +1077,9 @@ function renderGudang() {
       <div class="risk-track"><div class="risk-fill" style="width:${risk.toFixed(0)}%;background:${rc}"></div></div>
     </div>`;
   });
-
-  if(!F_BY_WH.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">
-    Tidak ada data gudang untuk rentang tanggal ini.</div>`;
-
+  if(!F_BY_WH.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data gudang untuk rentang tanggal ini.</div>`;
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-bar-wh"></div>
     <div class="section-label" style="margin-bottom:14px">Detail Per Gudang</div>${cardsHtml}`;
-
   if(F_BY_WH.length) {
     Plotly.newPlot('chart-bar-wh',[
       {type:'bar',name:'Defisit',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>Math.abs(w.def_val)/1e6),
@@ -1206,10 +1100,8 @@ function renderTrend() {
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-trend-val"></div>
     <div class="card" id="chart-trend-vol"></div>
     <div class="card warn-box" id="trend-kritis"></div>`;
-
   const labels=F_BY_DATE.map(d=>d.label||fmtDateShort(d.date));
   const colors=F_BY_DATE.map(d=>d.net_val<0?C.deficit:C.surplus);
-
   if(F_BY_DATE.length) {
     Plotly.newPlot('chart-trend-val',[{
       type:'scatter',mode:'lines+markers',
@@ -1222,7 +1114,6 @@ function renderTrend() {
       shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],
       yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
     },{responsive:true,displayModeBar:false});
-
     Plotly.newPlot('chart-trend-vol',[{
       type:'bar',x:labels,y:F_BY_DATE.map(d=>d.items),
       marker:{color:C.neutral},
@@ -1231,15 +1122,12 @@ function renderTrend() {
       yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
     },{responsive:true,displayModeBar:false});
   }
-
   const kritis=[...F_BY_DATE].sort((a,b)=>a.net_val-b.net_val).slice(0,3);
   let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
     <span style="color:var(--warn)">▲</span>
     <span style="font-size:12px;font-weight:700;color:var(--warn);letter-spacing:0.5px">Temuan Kritis</span>
   </div>`;
-  if(!kritis.length) {
-    kritisHtml += `<div style="font-size:13px;color:var(--muted)">Tidak ada data untuk rentang tanggal ini.</div>`;
-  }
+  if(!kritis.length) kritisHtml += `<div style="font-size:13px;color:var(--muted)">Tidak ada data untuk rentang tanggal ini.</div>`;
   for(const k of kritis){
     kritisHtml+=`<div style="margin-bottom:8px;font-size:13px;color:#94a3b8">
       <span style="color:var(--warn);margin-right:6px">·</span>
@@ -1256,7 +1144,6 @@ function renderPengguna() {
   const el=document.getElementById('tab-content');
   let cardsHtml='<div class="user-grid">';
   const totDef=F_TOTALS.totalDefVal||1;
-
   F_BY_USER.forEach((r,i)=>{
     const c=WH_PAL[i%WH_PAL.length];
     const pct=Math.abs(r.def_val)/Math.abs(totDef)*100;
@@ -1286,12 +1173,8 @@ function renderPengguna() {
     </div>`;
   });
   cardsHtml+='</div>';
-
-  if(!F_BY_USER.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">
-    Tidak ada data pengguna untuk rentang tanggal ini.</div>`;
-
+  if(!F_BY_USER.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data pengguna untuk rentang tanggal ini.</div>`;
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-user"></div>${cardsHtml}`;
-
   if(F_BY_USER.length) {
     const sorted=[...F_BY_USER].sort((a,b)=>a.def_val-b.def_val);
     Plotly.newPlot('chart-user',[{
@@ -1315,7 +1198,6 @@ function renderPengguna() {
 function renderTopItem() {
   const el=document.getElementById('tab-content');
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-top-def"></div><div class="card" id="chart-top-sur"></div>`;
-
   const defLabels=F_TOP_DEF.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
   if(F_TOP_DEF.length) {
     Plotly.newPlot('chart-top-def',[{
@@ -1335,7 +1217,6 @@ function renderTopItem() {
       height:400,
     },{responsive:true,displayModeBar:false});
   }
-
   const surLabels=F_TOP_SUR.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
   if(F_TOP_SUR.length) {
     Plotly.newPlot('chart-top-sur',[{
@@ -1365,10 +1246,9 @@ function renderDetail() {
   const whOpts=['<option value="">Semua Gudang</option>',
     ...[...new Set(F_RAW.map(r=>r.WH_Short))].sort().map(w=>`<option value="${w}">${w}</option>`)
   ].join('');
-
   el.innerHTML=filterBannerHTML()+`
     <div class="info-banner"><strong>Data Akumulasi per Item</strong> — 1 baris = 1 item unik (ItemCode + Gudang).
-      Item yang sama di beberapa dokumen digabung & dijumlahkan. Klik baris untuk detail.</div>
+      Item yang sama di beberapa dokumen digabung &amp; dijumlahkan. Klik baris untuk detail.</div>
     <div id="detail-summary" class="summary-row"></div>
     <div class="filter-row">
       <select id="dd-wh" onchange="applyDetailFilter()">${whOpts}</select>
@@ -1387,7 +1267,6 @@ function renderDetail() {
     </div>
     <div id="detail-table-wrap"></div>
     <div id="detail-pagination" class="pagination"></div>`;
-
   applyDetailFilter();
 }
 
@@ -1395,7 +1274,6 @@ function applyDetailFilter() {
   const wh=document.getElementById('dd-wh')?.value||'';
   const tipe=document.getElementById('dd-tipe')?.value||'';
   const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
-
   let data=[...F_PIV];
   if(wh) data=data.filter(r=>r.WH_Short===wh);
   if(tipe) data=data.filter(r=>r.Tipe===tipe);
@@ -1449,20 +1327,22 @@ function setPageSize(n, btn) {
   renderDetailTable();
 }
 
+// ── KOLOM TABEL DETAIL ────────────────────────────────────────
+// Kolom angka rata kanan, pakai font monospace agar digit sejajar
 const DETAIL_COLS=[
-  {key:'ItemCode',label:'Kode',w:'100px'},
-  {key:'ItemName',label:'Nama Item',w:'200px'},
-  {key:'WH_Short',label:'Gudang',w:'90px'},
-  {key:'User_Short',label:'Pengguna',w:'90px'},
-  {key:'QtyDiff',label:'Sel. Qty',w:'75px',num:true},
-  {key:'CurrentQty',label:'Qty Sistem',w:'80px',num:true},
-  {key:'Quantity',label:'Qty Fisik',w:'75px',num:true},
-  {key:'ValRate',label:'Hrg Pokok',w:'100px',num:true,rp:true},
-  {key:'ValuasiDiff',label:'Sel. Nilai',w:'115px',num:true,rp:true},
-  {key:'Docs',label:'Dok',w:'50px',num:true},
-  {key:'TanggalAwal',label:'Tgl Awal',w:'85px',date:true},
-  {key:'TanggalAkhir',label:'Tgl Akhir',w:'85px',date:true},
-  {key:'Tipe',label:'Tipe',w:'65px'},
+  {key:'ItemCode',   label:'Kode',       w:'100px'},
+  {key:'ItemName',   label:'Nama Item',  w:'200px'},
+  {key:'WH_Short',   label:'Gudang',     w:'90px'},
+  {key:'User_Short', label:'Pengguna',   w:'90px'},
+  {key:'QtyDiff',    label:'Sel. Qty',   w:'80px',  num:true},
+  {key:'CurrentQty', label:'Qty Sistem', w:'85px',  num:true},
+  {key:'Quantity',   label:'Qty Fisik',  w:'80px',  num:true},
+  {key:'ValRate',    label:'Hrg Pokok',  w:'110px', num:true, rp:true},
+  {key:'ValuasiDiff',label:'Sel. Nilai', w:'120px', num:true, rp:true},
+  {key:'Docs',       label:'Dok',        w:'50px',  num:true},
+  {key:'TanggalAwal',label:'Tgl Awal',   w:'85px',  date:true},
+  {key:'TanggalAkhir',label:'Tgl Akhir', w:'85px',  date:true},
+  {key:'Tipe',       label:'Tipe',       w:'65px'},
 ];
 
 function sortDetail(col) {
@@ -1482,7 +1362,8 @@ function renderDetailTable() {
   let thead=`<thead><tr>`;
   for(const col of DETAIL_COLS){
     const arrow=detailSort.col===col.key?(detailSort.asc?' ▲':' ▼'):'';
-    thead+=`<th style="min-width:${col.w};${col.num?'text-align:right':''}" onclick="sortDetail('${col.key}')">${col.label}${arrow}</th>`;
+    const align = (col.num || col.date) ? 'text-align:right' : '';
+    thead+=`<th style="min-width:${col.w};${align}" onclick="sortDetail('${col.key}')">${col.label}${arrow}</th>`;
   }
   thead+=`</tr></thead>`;
 
@@ -1493,20 +1374,29 @@ function renderDetailTable() {
     tbody+=`<tr class="data-tbl-row" style="${rowBg};cursor:pointer" onclick="showModal(${F_PIV.indexOf(r)})">`;
     for(const col of DETAIL_COLS){
       let val=r[col.key];
-      let style=col.num?'text-align:right':'';
+      // Angka: rata kanan + font monospace agar digit sejajar
+      let style = (col.num || col.date) ? 'text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace' : '';
       let display='';
-      if(col.date) display=fmtDateISO(val);
-      else if(col.rp) {
-        const n=(val===null||val===undefined||val===''||isNaN(val))?'—':smartNum(Math.abs(val));
-        display=n;
-        style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
-      }
-      else if(col.num) {
+      if(col.date) {
+        display = fmtDateISO(val);
+      } else if(col.rp) {
+        // Harga pokok & selisih nilai — format Rp dengan 2 desimal max
+        const n = (val===null||val===undefined||val===''||isNaN(val)) ? '—' : smartNum(Math.abs(val));
+        display = n === '—' ? '—' : `Rp\u00a0${n}`;
+        style += ';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
+      } else if(col.num) {
         display=(val===null||val===undefined||val===''||isNaN(val))?'—':smartNum(val);
-        style+=';color:'+(col.key==='QtyDiff'||col.key==='ValuasiDiff'?(val<0?C.deficit:val>0?C.surplus:C.muted):'#cbd5e1');
+        if(col.key==='QtyDiff'||col.key==='ValuasiDiff') {
+          style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
+          if(val>0) display='+'+display;
+        } else {
+          style+=';color:#cbd5e1';
+        }
+      } else if(col.key==='Tipe') {
+        display=val; style+=`;color:${tipeColor};font-weight:600`;
+      } else {
+        display=val||'';
       }
-      else if(col.key==='Tipe') { display=val; style+=`;color:${tipeColor};font-weight:600`; }
-      else display=val||'';
       tbody+=`<td style="font-size:12px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:${col.w};${style}">${display}</td>`;
     }
     tbody+='</tr>';
@@ -1570,14 +1460,15 @@ function showModal(idx) {
     const qc=d.QtyDiff<0?'#ef4444':d.QtyDiff>0?'#34d399':C.muted;
     const vc=d.ValuasiDiff<0?'#ef4444':d.ValuasiDiff>0?'#34d399':C.muted;
     const tc=d.Tipe==='Defisit'?'#ef4444':d.Tipe==='Surplus'?'#34d399':C.muted;
+    const mono='font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace';
     docRows+=`<tr style="background:${bg}">
       <td style="color:#93c5fd;font-family:monospace;font-size:10px;padding:7px 10px">${d.ID}</td>
       <td style="padding:7px 10px;font-size:11px">${fmtDateISO(d.PostingDate)}</td>
       <td style="padding:7px 10px;font-size:11px;color:#94a3b8">${d.User_Short}</td>
-      <td style="padding:7px 10px;text-align:right;font-size:11px">${smartNum(d.CurrentQty)}</td>
-      <td style="padding:7px 10px;text-align:right;font-size:11px">${smartNum(d.Quantity)}</td>
-      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${qc};font-weight:600">${smartSigned(d.QtyDiff)}</td>
-      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${vc};font-weight:600">${smartRpSigned(d.ValuasiDiff)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;${mono}">${smartNum(d.CurrentQty)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;${mono}">${smartNum(d.Quantity)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${qc};font-weight:600;${mono}">${smartSigned(d.QtyDiff)}</td>
+      <td style="padding:7px 10px;text-align:right;font-size:11px;color:${vc};font-weight:600;${mono}">${smartRpSigned(d.ValuasiDiff)}</td>
       <td style="padding:7px 10px;font-size:11px;color:${tc};font-weight:600">${d.Tipe}</td>
     </tr>`;
   });
