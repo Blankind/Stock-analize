@@ -74,106 +74,158 @@
   .header {
     background: linear-gradient(160deg, #0d1a2d 0%, var(--bg) 70%);
     border-bottom: 1px solid var(--border);
-    padding: 22px 36px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    padding: 18px 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
   }
-  .header-left { flex: 1; }
+  .header-left { flex: 1; min-width: 0; }
   .header-badge { font-size: 10px; font-weight: 700; color: var(--neutral); letter-spacing: 1.5px;
     text-transform: uppercase; background: #818cf815; border: 1px solid #818cf830;
     border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
   .header-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-  .header-title { font-size: 22px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.5px; margin: 8px 0 6px; }
+  .header-title { font-size: 20px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.5px; margin: 6px 0 4px; }
   .header-meta { font-size: 12px; color: #94a3b8; }
   .header-meta span { color: var(--border); margin: 0 6px; }
   .header-net {
     background: #f8717112; border: 1px solid #f8717130;
-    border-radius: 12px; padding: 14px 22px; text-align: right;
+    border-radius: 12px; padding: 12px 18px; text-align: right; flex-shrink: 0;
   }
   .header-net-label { font-size: 9px; font-weight: 700; color: var(--deficit);
-    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
-  .header-net-val { font-size: 20px; font-weight: 700; color: var(--deficit); letter-spacing: -0.5px; }
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .header-net-val { font-size: 18px; font-weight: 700; color: var(--deficit); letter-spacing: -0.5px; }
   .btn-reset { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
     color: var(--muted); font-size: 11px; font-weight: 600; padding: 7px 14px; cursor: pointer;
-    letter-spacing: 0.3px; transition: color 0.15s; }
+    letter-spacing: 0.3px; transition: color 0.15s; flex-shrink: 0; white-space: nowrap; }
   .btn-reset:hover { color: var(--text); }
 
-  /* ── DATE FILTER BAR ── */
+  /* ── DATE FILTER BAR — REDESIGNED ── */
   #date-filter-bar {
     background: var(--card2);
     border-bottom: 1px solid var(--border);
-    padding: 10px 36px;
+    padding: 0;
+  }
+
+  /* Inner wrapper — scrollable on mobile */
+  .dfb-inner {
+    display: flex;
+    align-items: stretch;
+    min-height: 52px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .dfb-inner::-webkit-scrollbar { display: none; }
+
+  /* Section dividers */
+  .dfb-section {
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    padding: 0 14px;
+    gap: 8px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
   }
-  .date-filter-label {
-    font-size: 10px; font-weight: 700; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1.4px;
+  .dfb-section:last-child { border-right: none; }
+
+  .dfb-label {
+    font-size: 9px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.6px;
     white-space: nowrap;
+  }
+
+  /* Date range inputs — side by side, compact */
+  .dfb-range {
     display: flex; align-items: center; gap: 6px;
   }
-  .date-filter-label::before {
-    content: '';
-    display: inline-block;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--neutral);
+  .dfb-date-wrap {
+    display: flex; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    transition: border-color 0.15s;
   }
-  .date-input-group {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .date-input-group label {
-    font-size: 11px; color: var(--muted); white-space: nowrap;
+  .dfb-date-wrap:focus-within { border-color: var(--neutral); }
+  .dfb-date-lbl {
+    font-size: 10px; color: var(--muted); padding: 0 8px 0 10px;
+    white-space: nowrap; pointer-events: none; user-select: none;
   }
   input[type=date] {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    padding: 8px 10px 8px 0;
     color: var(--text);
     font-size: 12px;
     font-family: var(--font);
     outline: none;
     cursor: pointer;
-    transition: border-color 0.15s;
     color-scheme: dark;
+    width: 120px;
   }
-  input[type=date]:focus,
-  input[type=date]:hover { border-color: var(--neutral); }
-  .date-filter-sep {
-    font-size: 12px; color: var(--muted);
+  .dfb-sep {
+    font-size: 14px; color: var(--border); flex-shrink: 0;
   }
-  .date-quick-btns {
-    display: flex; gap: 6px; flex-wrap: wrap;
+
+  /* Quick preset buttons */
+  .dfb-presets {
+    display: flex; gap: 4px;
   }
   .dq-btn {
-    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 12px;
-    cursor: pointer; letter-spacing: 0.3px; white-space: nowrap;
-    transition: all 0.15s;
-  }
-  .dq-btn:hover { border-color: var(--neutral); color: var(--neutral); }
-  .dq-btn.active { background: #818cf820; border-color: var(--neutral); color: var(--neutral); }
-  .date-filter-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-  #date-filter-badge {
-    font-size: 11px; color: var(--warn); font-weight: 600;
-    background: #fbbf2415; border: 1px solid #fbbf2430;
-    border-radius: 6px; padding: 4px 10px;
-    display: none; white-space: nowrap;
-  }
-  .btn-clear-date {
     background: transparent; border: 1px solid var(--border); border-radius: 6px;
-    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 12px;
-    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 10px;
+    cursor: pointer; letter-spacing: 0.3px; white-space: nowrap;
+    transition: all 0.12s; flex-shrink: 0;
   }
+  .dq-btn:hover { border-color: var(--neutral); color: var(--neutral); background: #818cf808; }
+  .dq-btn.active {
+    background: #818cf820; border-color: var(--neutral);
+    color: var(--neutral);
+  }
+
+  /* Status section — right side, expands */
+  .dfb-status {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 14px; flex: 1; justify-content: flex-end;
+    min-width: 0;
+  }
+  #dfb-count {
+    font-size: 11px; color: var(--muted); white-space: nowrap;
+    display: none;
+  }
+  #dfb-count.active { display: block; color: var(--warn); }
+  .btn-clear-date {
+    background: transparent; border: 1px solid transparent; border-radius: 6px;
+    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 10px;
+    cursor: pointer; transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
+    display: none;
+  }
+  .btn-clear-date.visible { display: block; }
   .btn-clear-date:hover { border-color: var(--deficit); color: var(--deficit); }
+
+  /* Mobile: stack date filter into 2 rows */
+  @media (max-width: 640px) {
+    .dfb-inner {
+      flex-wrap: wrap;
+      overflow-x: visible;
+    }
+    .dfb-section {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      width: 100%;
+      padding: 10px 12px;
+    }
+    .dfb-section:last-child { border-bottom: none; }
+    .dfb-range { width: 100%; justify-content: space-between; }
+    .dfb-date-wrap { flex: 1; }
+    input[type=date] { width: 100%; }
+    .dfb-presets { flex-wrap: wrap; }
+    .dfb-status { justify-content: flex-start; padding: 8px 12px; width: 100%; }
+  }
 
   /* Tabs */
   .tab-bar {
     background: var(--bg); border-bottom: 1px solid var(--border);
-    padding: 0 24px; display: flex; gap: 0; overflow-x: auto;
+    padding: 0 16px; display: flex; gap: 0; overflow-x: auto;
+    scrollbar-width: none;
   }
+  .tab-bar::-webkit-scrollbar { display: none; }
   .tab-btn {
-    padding: 0 22px; height: 44px; font-size: 12px; font-weight: 600;
+    padding: 0 18px; height: 44px; font-size: 12px; font-weight: 600;
     letter-spacing: 0.4px; color: var(--muted); background: transparent;
     border: none; border-bottom: 2px solid transparent; cursor: pointer;
     white-space: nowrap; transition: color 0.15s, border-color 0.15s;
@@ -182,12 +234,12 @@
   .tab-btn.active { color: var(--neutral); border-bottom-color: var(--neutral); }
 
   /* Content */
-  .tab-content { padding: 28px 36px; max-width: 1360px; margin: 0 auto; }
+  .tab-content { padding: 24px 28px; max-width: 1360px; margin: 0 auto; }
 
   /* Cards */
   .card {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;
+    border-radius: 14px; padding: 20px 22px; margin-bottom: 16px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.35);
   }
   .section-label {
@@ -197,24 +249,24 @@
   }
 
   /* KPI Grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px,1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 16px; }
   .kpi-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 20px 22px 22px; position: relative; overflow: hidden;
+    padding: 18px 20px 20px; position: relative; overflow: hidden;
   }
   .kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.4px; font-weight: 600; margin-bottom: 12px; }
-  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
+    letter-spacing: 1.4px; font-weight: 600; margin-bottom: 10px; }
+  .kpi-value { font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
   .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
   .kpi-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; opacity: 0.4; border-radius: 0 0 14px 14px; }
 
   /* Table */
   .tbl-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
-  th { padding: 10px 16px; font-size: 10px; font-weight: 600; color: var(--muted);
+  th { padding: 10px 14px; font-size: 10px; font-weight: 600; color: var(--muted);
     text-transform: uppercase; letter-spacing: 1.2px; background: #080d1a;
     border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
   .tr-total td { background: var(--bg) !important; }
   .tr-total td:first-child { font-size: 11px; font-weight: 700; color: var(--neutral); letter-spacing: 1px; }
@@ -227,35 +279,35 @@
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
 
-  /* WH Cards (gudang tab) */
+  /* WH Cards */
   .wh-card { border-left: 4px solid; }
   .risk-track { background: #22c55e30; border-radius: 6px; height: 8px; margin-top: 12px; overflow: hidden; }
   .risk-fill { height: 100%; border-radius: 6px; }
 
   /* User Cards */
-  .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; }
-  .user-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; border-width: 2px; border-style: solid; }
+  .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0; border-width: 2px; border-style: solid; }
   .stat-mini { background: #0f172a; border-radius: 8px; padding: 10px; flex: 1; }
   .stat-mini-label { font-size: 10px; color: var(--muted); }
-  .stat-mini-val { font-size: 16px; font-weight: 700; }
+  .stat-mini-val { font-size: 15px; font-weight: 700; }
 
   /* Warn box */
   .warn-box { border: 1px solid #fbbf2430; background: var(--card2); }
 
   /* Detail tab filters */
-  .filter-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   select, input[type=text] {
     background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 14px; color: var(--text); font-size: 13px; font-family: var(--font);
+    padding: 8px 12px; color: var(--text); font-size: 13px; font-family: var(--font);
     outline: none;
   }
-  select { min-width: 150px; }
-  input[type=text] { flex: 2; min-width: 180px; }
+  select { min-width: 140px; }
+  input[type=text] { flex: 2; min-width: 160px; }
   select:focus, input:focus { border-color: var(--neutral); }
   .btn-export {
     background: var(--neutral); color: #fff; border: none; border-radius: 8px;
-    padding: 8px 18px; font-size: 12px; font-weight: 600; cursor: pointer;
+    padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
     letter-spacing: 0.3px; white-space: nowrap;
   }
   .btn-export:hover { opacity: 0.88; }
@@ -265,63 +317,73 @@
   .data-tbl th:hover { color: var(--text); }
   .data-tbl tr:nth-child(odd) td { background: #0b1120; }
   .data-tbl tr:hover td { background: #818cf810; }
-  .data-tbl tr.selected td { background: #818cf815; outline: 1px solid #818cf840; }
 
   /* Pagination */
-  .pagination { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 12px; color: var(--muted); }
+  .pagination { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
   .page-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
     color: var(--text); padding: 4px 10px; cursor: pointer; font-size: 12px; }
   .page-btn:hover { border-color: var(--neutral); color: var(--neutral); }
   .page-btn:disabled { opacity: 0.35; cursor: default; }
-  .page-info { color: var(--muted); }
-  .pagesize-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+  .pagesize-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
   .ps-btn { background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 5px 12px; cursor: pointer; font-size: 12px; }
+    color: var(--text); padding: 5px 11px; cursor: pointer; font-size: 12px; }
   .ps-btn.active, .ps-btn:hover { border-color: var(--neutral); color: var(--neutral); }
 
   /* Info banner */
   .info-banner { background: #818cf810; border: 1px solid #818cf830; border-radius: 10px;
-    padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: var(--muted); }
+    padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
   .info-banner strong { color: #e2e8f0; }
 
   /* Summary mini cards */
-  .summary-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .summary-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px; flex: 1; min-width: 140px; }
+    padding: 12px 14px; flex: 1; min-width: 130px; }
   .mini-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.2px; margin-bottom: 8px; font-weight: 600; }
-  .mini-val { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    letter-spacing: 1.2px; margin-bottom: 6px; font-weight: 600; }
+  .mini-val { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+
+  /* Filter active banner */
+  .filter-active-banner {
+    background: #fbbf2410; border: 1px solid #fbbf2430; border-radius: 10px;
+    padding: 9px 14px; margin-bottom: 14px; font-size: 12px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .fab-icon { font-size: 13px; flex-shrink: 0; }
+  .fab-text { color: #fbbf24; flex: 1; min-width: 0; }
+  .fab-link { color: #fbbf24; text-decoration: underline; cursor: pointer; white-space: nowrap;
+    background: none; border: none; font-size: 12px; padding: 0; font-family: var(--font); }
+  .fab-link:hover { opacity: 0.8; }
 
   /* Modal */
   #modal-overlay {
     position: fixed; inset: 0; z-index: 9998;
     background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
-    display: none; align-items: center; justify-content: center; padding: 20px;
+    display: none; align-items: center; justify-content: center; padding: 16px;
   }
   #modal-overlay.open { display: flex; }
   .modal-panel {
-    background: var(--card); border-radius: 16px; padding: 18px 22px 22px;
-    width: 860px; max-width: 100%; max-height: 88vh; overflow-y: auto;
+    background: var(--card); border-radius: 16px; padding: 16px 20px 20px;
+    width: 860px; max-width: 100%; max-height: 90vh; overflow-y: auto;
     position: relative;
   }
   .modal-header {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; background: var(--card); z-index: 10; padding-top: 2px;
+    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--card); z-index: 10;
   }
-  .modal-close { cursor: pointer; font-size: 14px; color: var(--muted); padding: 2px 8px;
-    background: var(--card2); border-radius: 4px; border: none; color: var(--muted); }
+  .modal-close { cursor: pointer; font-size: 13px; color: var(--muted); padding: 2px 8px;
+    background: var(--card2); border-radius: 4px; border: none; }
   .modal-close:hover { color: var(--text); }
   .cell-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
   .detail-cell { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 13px; flex: 1; min-width: 110px; }
+    padding: 10px 12px; flex: 1; min-width: 100px; }
   .detail-cell-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
     letter-spacing: 1.3px; margin-bottom: 6px; font-weight: 600; }
   .detail-cell-val { font-size: 13px; font-weight: 500; color: #e2e8f0; word-break: break-word; }
   .detail-cell.big .detail-cell-val { font-size: 15px; font-weight: 700; }
-  .tipe-badge { display: inline-block; border-radius: 20px; padding: 3px 13px;
+  .tipe-badge { display: inline-block; border-radius: 20px; padding: 3px 12px;
     font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-  .docs-section { background: var(--bg); border-radius: 10px; padding: 14px 16px;
+  .docs-section { background: var(--bg); border-radius: 10px; padding: 12px 14px;
     border: 1px solid var(--border); }
   .docs-title { font-weight: 700; font-size: 11px; color: #e2e8f0; text-transform: uppercase;
     letter-spacing: 1.4px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -333,22 +395,14 @@
   .docs-scroll table td:first-child, .docs-scroll table td:nth-child(2),
   .docs-scroll table td:nth-child(3), .docs-scroll table td:last-child { text-align: left; }
 
-  /* Filter active indicator */
-  .filter-active-dot {
-    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--warn); margin-left: 6px; vertical-align: middle;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
   @media (max-width: 700px) {
-    .header { padding: 16px 16px; }
-    .tab-content { padding: 16px 12px; }
+    .header { padding: 14px 14px; }
+    .tab-content { padding: 14px 12px; }
     .tab-bar { padding: 0 8px; }
-    #date-filter-bar { padding: 10px 12px; }
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
     .filter-row { flex-direction: column; }
+    .header-net { display: none; }
   }
 </style>
 </head>
@@ -366,9 +420,7 @@
     <label class="btn-upload" for="file-input">Pilih File Excel</label>
     <input type="file" id="file-input" accept=".xlsx,.xls">
   </div>
-  <div class="upload-note">
-    <span>✓</span> Data tidak dikirim ke server — semua diproses di browser kamu
-  </div>
+  <div class="upload-note"><span>✓</span> Data tidak dikirim ke server — semua diproses di browser kamu</div>
   <div id="upload-error"></div>
 </div>
 
@@ -382,7 +434,7 @@
 <div id="dashboard">
   <div class="header">
     <div class="header-left">
-      <div style="margin-bottom:8px">
+      <div style="margin-bottom:6px">
         <span class="header-badge">ERPNext</span>
         <span class="header-sub">Stock Reconciliation</span>
       </div>
@@ -396,28 +448,48 @@
     <button class="btn-reset" onclick="resetDashboard()">↩ Ganti File</button>
   </div>
 
-  <!-- DATE FILTER BAR -->
+  <!-- DATE FILTER BAR — REDESIGNED -->
   <div id="date-filter-bar">
-    <span class="date-filter-label">Filter Tanggal</span>
-    <div class="date-input-group">
-      <label for="df-from">Dari</label>
-      <input type="date" id="df-from" onchange="onDateFilterChange()">
-    </div>
-    <span class="date-filter-sep">—</span>
-    <div class="date-input-group">
-      <label for="df-to">Sampai</label>
-      <input type="date" id="df-to" onchange="onDateFilterChange()">
-    </div>
-    <div class="date-quick-btns" id="quick-btns">
-      <button class="dq-btn active" id="dq-all" onclick="setQuickDate('all',this)">Semua</button>
-      <button class="dq-btn" id="dq-7d" onclick="setQuickDate('7d',this)">7 Hari</button>
-      <button class="dq-btn" id="dq-30d" onclick="setQuickDate('30d',this)">30 Hari</button>
-      <button class="dq-btn" id="dq-mtd" onclick="setQuickDate('mtd',this)">Bulan Ini</button>
-      <button class="dq-btn" id="dq-q" onclick="setQuickDate('q',this)">Kuartal Ini</button>
-    </div>
-    <div class="date-filter-right">
-      <span id="date-filter-badge"></span>
-      <button class="btn-clear-date" id="btn-clear-date" onclick="clearDateFilter()" style="display:none">✕ Reset</button>
+    <div class="dfb-inner">
+
+      <!-- Section 1: Label -->
+      <div class="dfb-section" style="padding:0 12px 0 16px">
+        <span class="dfb-label">Filter Tanggal</span>
+      </div>
+
+      <!-- Section 2: Date range pickers -->
+      <div class="dfb-section">
+        <div class="dfb-range">
+          <div class="dfb-date-wrap">
+            <span class="dfb-date-lbl">Dari</span>
+            <input type="date" id="df-from" autocomplete="off">
+          </div>
+          <span class="dfb-sep">→</span>
+          <div class="dfb-date-wrap">
+            <span class="dfb-date-lbl">Sampai</span>
+            <input type="date" id="df-to" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Quick presets -->
+      <div class="dfb-section">
+        <div class="dfb-presets">
+          <button class="dq-btn active" data-preset="all">Semua</button>
+          <button class="dq-btn" data-preset="7d">7 Hari</button>
+          <button class="dq-btn" data-preset="30d">30 Hari</button>
+          <button class="dq-btn" data-preset="mtd">Bulan Ini</button>
+          <button class="dq-btn" data-preset="q">Kuartal Ini</button>
+          <button class="dq-btn" data-preset="ytd">Tahun Ini</button>
+        </div>
+      </div>
+
+      <!-- Section 4: Status + reset -->
+      <div class="dfb-status">
+        <span id="dfb-count"></span>
+        <button class="btn-clear-date" id="btn-clear-date" onclick="applyDateFilter(null,null,'all')">✕ Reset</button>
+      </div>
+
     </div>
   </div>
 
@@ -457,14 +529,14 @@ const PLOT_LAY = {
 const TITLE_FONT = {font:{size:12,color:'#94a3b8',family:'"Inter",sans-serif'},x:0.01};
 
 // ── GLOBAL STATE ──────────────────────────────────────────────
-let RAW=[], PIV=[], BY_WH=[], BY_DATE=[], BY_USER=[];
-let TOP_DEF=[], TOP_SUR=[];
+let RAW=[], PIV=[];
 let TOTALS={};
 let currentTab='ringkasan';
 
 // ── DATE FILTER STATE ─────────────────────────────────────────
 let DATE_FROM = null; // Date object or null
 let DATE_TO   = null; // Date object or null
+let ACTIVE_PRESET = 'all'; // tracks which quick button is active
 
 // Filtered slices (rebuilt on each filter change)
 let F_RAW=[], F_PIV=[], F_BY_WH=[], F_BY_DATE=[], F_BY_USER=[];
@@ -504,139 +576,185 @@ function smartRpSigned(v) {
 }
 function fmtDate(d) {
   if(!d || isNaN(new Date(d).getTime())) return '—';
-  const dt = new Date(d);
-  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
 }
 function fmtDateShort(d) {
   if(!d || isNaN(new Date(d).getTime())) return '?';
-  const dt = new Date(d);
-  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+  return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
 }
 function fmtDateISO(d) {
   if(!d || isNaN(new Date(d).getTime())) return '';
   const dt = new Date(d);
-  const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');
-  return `${y}-${m}-${dd}`;
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 function toDateOnly(d) {
-  // strip time for date-only comparison
   if(!d) return null;
   const dt = new Date(d);
   if(isNaN(dt.getTime())) return null;
   return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
 }
 
-// ── DATE FILTER LOGIC ─────────────────────────────────────────
-function onDateFilterChange() {
+// ═══════════════════════════════════════════════════════════════
+// DATE FILTER — SINGLE ENTRY POINT
+// All date changes go through applyDateFilter()
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Master date filter function.
+ * @param {Date|null} from
+ * @param {Date|null} to
+ * @param {string} preset  — key for active preset button, or 'custom'
+ */
+function applyDateFilter(from, to, preset) {
+  DATE_FROM = from ? toDateOnly(from) : null;
+  DATE_TO   = to   ? toDateOnly(to)   : null;
+  ACTIVE_PRESET = preset || 'custom';
+
+  // Sync inputs
+  document.getElementById('df-from').value = DATE_FROM ? fmtDateISO(DATE_FROM) : '';
+  document.getElementById('df-to').value   = DATE_TO   ? fmtDateISO(DATE_TO)   : '';
+
+  // Sync preset buttons
+  document.querySelectorAll('.dq-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === ACTIVE_PRESET);
+  });
+
+  // Rebuild filtered data
+  rebuildFiltered();
+
+  // Update UI indicators
+  updateFilterStatusUI();
+
+  // Re-render current tab
+  renderTab(currentTab);
+}
+
+// Called when user manually types in a date input
+function onDateInputChange() {
   const fromVal = document.getElementById('df-from').value;
   const toVal   = document.getElementById('df-to').value;
-  DATE_FROM = fromVal ? new Date(fromVal) : null;
-  DATE_TO   = toVal   ? new Date(toVal)   : null;
-  // clear quick-btn active state (manual date entry)
-  document.querySelectorAll('.dq-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dq-all').classList.toggle('active', !DATE_FROM && !DATE_TO);
-  updateDateFilterUI();
+  const from = fromVal ? new Date(fromVal+'T00:00:00') : null;
+  const to   = toVal   ? new Date(toVal+'T00:00:00')   : null;
+
+  // If both cleared → reset to "all"
+  if(!from && !to) {
+    applyDateFilter(null, null, 'all');
+    return;
+  }
+
+  // Mark as custom (no preset active)
+  DATE_FROM = from ? toDateOnly(from) : null;
+  DATE_TO   = to   ? toDateOnly(to)   : null;
+  ACTIVE_PRESET = 'custom';
+
+  document.querySelectorAll('.dq-btn').forEach(btn => btn.classList.remove('active'));
+
   rebuildFiltered();
+  updateFilterStatusUI();
   renderTab(currentTab);
 }
 
-function setQuickDate(mode, btn) {
-  document.querySelectorAll('.dq-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-
+// Called when a preset button is clicked
+function onPresetClick(preset) {
   const today = toDateOnly(new Date());
   const maxDate = TOTALS.maxDate ? toDateOnly(TOTALS.maxDate) : today;
+  const minDate = TOTALS.minDate ? toDateOnly(TOTALS.minDate) : today;
 
-  if(mode === 'all') {
-    DATE_FROM = null; DATE_TO = null;
-    document.getElementById('df-from').value = '';
-    document.getElementById('df-to').value = '';
-  } else if(mode === '7d') {
-    DATE_TO = maxDate;
-    DATE_FROM = new Date(maxDate); DATE_FROM.setDate(DATE_FROM.getDate() - 6);
-    setInputDates(DATE_FROM, DATE_TO);
-  } else if(mode === '30d') {
-    DATE_TO = maxDate;
-    DATE_FROM = new Date(maxDate); DATE_FROM.setDate(DATE_FROM.getDate() - 29);
-    setInputDates(DATE_FROM, DATE_TO);
-  } else if(mode === 'mtd') {
-    DATE_TO = maxDate;
-    DATE_FROM = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-    setInputDates(DATE_FROM, DATE_TO);
-  } else if(mode === 'q') {
-    DATE_TO = maxDate;
+  let from = null, to = null;
+
+  if(preset === 'all') {
+    from = null; to = null;
+  } else if(preset === '7d') {
+    to = maxDate;
+    from = new Date(maxDate); from.setDate(from.getDate() - 6);
+  } else if(preset === '30d') {
+    to = maxDate;
+    from = new Date(maxDate); from.setDate(from.getDate() - 29);
+  } else if(preset === 'mtd') {
+    to = maxDate;
+    from = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+  } else if(preset === 'q') {
+    to = maxDate;
     const qStart = Math.floor(maxDate.getMonth() / 3) * 3;
-    DATE_FROM = new Date(maxDate.getFullYear(), qStart, 1);
-    setInputDates(DATE_FROM, DATE_TO);
+    from = new Date(maxDate.getFullYear(), qStart, 1);
+  } else if(preset === 'ytd') {
+    to = maxDate;
+    from = new Date(maxDate.getFullYear(), 0, 1);
   }
 
-  updateDateFilterUI();
-  rebuildFiltered();
-  renderTab(currentTab);
+  // Clamp to data range
+  if(from && minDate && from < minDate) from = minDate;
+  if(to   && maxDate && to   > maxDate) to   = maxDate;
+
+  applyDateFilter(from, to, preset);
 }
 
-function setInputDates(from, to) {
-  document.getElementById('df-from').value = fmtDateISO(from);
-  document.getElementById('df-to').value   = fmtDateISO(to);
-}
-
-function clearDateFilter() {
-  DATE_FROM = null; DATE_TO = null;
-  document.getElementById('df-from').value = '';
-  document.getElementById('df-to').value = '';
-  document.querySelectorAll('.dq-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dq-all').classList.add('active');
-  updateDateFilterUI();
-  rebuildFiltered();
-  renderTab(currentTab);
-}
-
-function updateDateFilterUI() {
-  const isFiltered = DATE_FROM || DATE_TO;
-  const badge = document.getElementById('date-filter-badge');
-  const clearBtn = document.getElementById('btn-clear-date');
+function updateFilterStatusUI() {
+  const isFiltered = !!(DATE_FROM || DATE_TO);
+  const countEl    = document.getElementById('dfb-count');
+  const clearBtn   = document.getElementById('btn-clear-date');
 
   if(isFiltered) {
-    const parts = [];
-    if(DATE_FROM) parts.push(`dari ${fmtDate(DATE_FROM)}`);
-    if(DATE_TO) parts.push(`sampai ${fmtDate(DATE_TO)}`);
-    badge.innerHTML = `⚡ Filter aktif: ${parts.join(' ')} — ${F_RAW.length} dari ${RAW.length} baris`;
-    badge.style.display = 'inline-block';
-    clearBtn.style.display = 'inline-block';
+    const pct = RAW.length ? Math.round(F_RAW.length/RAW.length*100) : 0;
+    countEl.textContent  = `⚡ ${F_RAW.length.toLocaleString('id-ID')} / ${RAW.length.toLocaleString('id-ID')} baris (${pct}%)`;
+    countEl.classList.add('active');
+    clearBtn.classList.add('visible');
   } else {
-    badge.style.display = 'none';
-    clearBtn.style.display = 'none';
+    countEl.textContent = '';
+    countEl.classList.remove('active');
+    clearBtn.classList.remove('visible');
   }
 
-  // update header net to reflect filter
-  if(Object.keys(F_TOTALS).length) {
-    const netV = F_TOTALS.netVal || 0;
-    document.getElementById('header-net-val').textContent =
-      (netV<0?'-':'')+fmtRp(Math.abs(netV));
-    const minD = F_TOTALS.minDate, maxD = F_TOTALS.maxDate;
-    const items = F_TOTALS.totalItems || 0;
-    const docs  = F_TOTALS.totalDocs || 0;
-    const filterNote = isFiltered ? ` <span style="color:var(--warn);font-weight:600">(difilter)</span>` : '';
-    document.getElementById('header-meta').innerHTML =
-      `Periode <strong>${fmtDate(minD)} – ${fmtDate(maxD)}</strong>`+
-      `<span>·</span>${items} item<span>·</span>${docs} dokumen${filterNote}`;
-  }
+  // Update header net val
+  const netV = F_TOTALS.netVal || 0;
+  document.getElementById('header-net-val').textContent =
+    (netV<0?'-':'')+fmtRp(Math.abs(netV));
+
+  const minD = F_TOTALS.minDate, maxD = F_TOTALS.maxDate;
+  const filterNote = isFiltered
+    ? ` <span style="color:var(--warn);font-weight:600">·⚡ difilter</span>` : '';
+  document.getElementById('header-meta').innerHTML =
+    `Periode <strong>${fmtDate(minD)} – ${fmtDate(maxD)}</strong>`+
+    `<span>·</span>${F_TOTALS.totalItems||0} item<span>·</span>${F_TOTALS.totalDocs||0} dokumen${filterNote}`;
 }
 
+// ── BIND DATE INPUTS (event: input + change both) ────────────
+// Using 'input' fires on every keystroke; 'change' fires on blur/confirm
+// We debounce so rapid typing doesn't trigger 10 redraws
+let dateDebounce = null;
+function scheduleDateInputChange() {
+  clearTimeout(dateDebounce);
+  dateDebounce = setTimeout(onDateInputChange, 350);
+}
+
+// ── PRESET BUTTONS — delegate via data-preset ────────────────
+document.querySelectorAll('.dq-btn').forEach(btn => {
+  btn.addEventListener('click', () => onPresetClick(btn.dataset.preset));
+});
+
+// ── DATE INPUT EVENTS ────────────────────────────────────────
+['df-from','df-to'].forEach(id => {
+  const el = document.getElementById(id);
+  // 'change' fires when user picks from calendar widget
+  el.addEventListener('change', onDateInputChange);
+  // 'input' fires when user types directly
+  el.addEventListener('input', scheduleDateInputChange);
+});
+
+// ── ROW DATE FILTER ───────────────────────────────────────────
 function rowInDateRange(r) {
   if(!DATE_FROM && !DATE_TO) return true;
   const d = toDateOnly(r.PostingDate);
   if(!d) return false;
-  if(DATE_FROM && d < toDateOnly(DATE_FROM)) return false;
-  if(DATE_TO   && d > toDateOnly(DATE_TO))   return false;
+  if(DATE_FROM && d < DATE_FROM) return false;
+  if(DATE_TO   && d > DATE_TO)   return false;
   return true;
 }
 
+// ── REBUILD FILTERED DATA ─────────────────────────────────────
 function rebuildFiltered() {
-  // Filter RAW by date
   F_RAW = RAW.filter(rowInDateRange);
 
-  // Rebuild PIV from F_RAW
   const pivMap={};
   for(const r of F_RAW){
     const key=`${r.ItemCode}|||${r.WH_Short}|||${r.User_Short}`;
@@ -662,7 +780,6 @@ function rebuildFiltered() {
     Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
   }));
 
-  // Rebuild TOTALS
   F_TOTALS.totalItems=F_PIV.length;
   F_TOTALS.totalDocs=new Set(F_RAW.map(r=>r.ID)).size;
   F_TOTALS.totalDefVal=F_PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
@@ -673,7 +790,6 @@ function rebuildFiltered() {
   F_TOTALS.minDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
   F_TOTALS.maxDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
 
-  // Rebuild BY_WH
   const whMap={};
   for(const r of F_PIV){
     if(!whMap[r.WH_Short]) whMap[r.WH_Short]={WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
@@ -688,7 +804,6 @@ function rebuildFiltered() {
     risk_pct:Math.abs(w.def_val)/(Math.abs(w.def_val)+Math.abs(w.sur_val)||1)*100,
   })).sort((a,b)=>a.def_val-b.def_val);
 
-  // Rebuild BY_DATE
   const dateMap={};
   for(const r of F_RAW){
     if(!r.PostingDate) continue;
@@ -699,7 +814,6 @@ function rebuildFiltered() {
   }
   F_BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
 
-  // Rebuild BY_USER
   const userMap={};
   for(const r of F_PIV){
     if(!userMap[r.User_Short]) userMap[r.User_Short]={User_Short:r.User_Short,docs:0,items:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
@@ -710,7 +824,6 @@ function rebuildFiltered() {
   }
   F_BY_USER=Object.values(userMap);
 
-  // Top DEF/SUR
   F_TOP_DEF=[...F_PIV].filter(r=>r.QtyDiff<0).sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff).slice(0,10);
   F_TOP_SUR=[...F_PIV].filter(r=>r.QtyDiff>0).sort((a,b)=>b.ValuasiDiff-a.ValuasiDiff).slice(0,10);
 }
@@ -744,8 +857,7 @@ function processFile(file) {
         const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
         parseData(raw);
         buildAggregates();
-        initDateFilterInputs();
-        rebuildFiltered();
+        initDateFilter();
         showDashboard();
       } catch(err) {
         document.getElementById('loading-screen').style.display='none';
@@ -794,19 +906,15 @@ function toNum(v) {
 
 function parseExcelDate(v) {
   if(!v) return null;
-  if(v instanceof Date) {
-    return isNaN(v.getTime()) ? null : v;
-  }
+  if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
   if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) {
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? null : d;
+    const d = new Date(v); return isNaN(d.getTime()) ? null : d;
   }
   if(typeof v==='number') {
     const d = new Date(Math.round((v - 25569) * 86400 * 1000));
     return isNaN(d.getTime()) ? null : d;
   }
-  const d = new Date(v);
-  return isNaN(d.getTime()) ? null : d;
+  const d = new Date(v); return isNaN(d.getTime()) ? null : d;
 }
 
 function buildAggregates() {
@@ -844,39 +952,41 @@ function buildAggregates() {
   TOTALS.netVal=TOTALS.totalDefVal+TOTALS.totalSurVal;
   TOTALS.minDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
   TOTALS.maxDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
-
-  BY_WH=[];BY_DATE=[];BY_USER=[];
-  TOP_DEF=[];TOP_SUR=[];
 }
 
-function initDateFilterInputs() {
-  // pre-fill date inputs with data range
+function initDateFilter() {
+  // Set min/max attributes on inputs based on data range
   const minISO = fmtDateISO(TOTALS.minDate);
   const maxISO = fmtDateISO(TOTALS.maxDate);
-  if(minISO) document.getElementById('df-from').min = minISO;
-  if(maxISO) document.getElementById('df-to').max   = maxISO;
-  // reset to "all"
-  DATE_FROM = null; DATE_TO = null;
-  document.getElementById('df-from').value = '';
-  document.getElementById('df-to').value   = '';
-  document.querySelectorAll('.dq-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dq-all').classList.add('active');
+  const fromEl = document.getElementById('df-from');
+  const toEl   = document.getElementById('df-to');
+  if(minISO) { fromEl.min = minISO; toEl.min = minISO; }
+  if(maxISO) { fromEl.max = maxISO; toEl.max = maxISO; }
+
+  // Start with "all" — no filter
+  DATE_FROM = null; DATE_TO = null; ACTIVE_PRESET = 'all';
+  fromEl.value = ''; toEl.value = '';
+  document.querySelectorAll('.dq-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === 'all');
+  });
+
+  rebuildFiltered();
 }
 
 function showDashboard() {
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
-  updateDateFilterUI();
+  updateFilterStatusUI();
   renderTab('ringkasan');
 }
 
 function resetDashboard() {
-  RAW=[]; PIV=[]; BY_WH=[]; BY_DATE=[]; BY_USER=[]; TOP_DEF=[]; TOP_SUR=[];
-  F_RAW=[]; F_PIV=[]; F_BY_WH=[]; F_BY_DATE=[]; F_BY_USER=[]; F_TOP_DEF=[]; F_TOP_SUR=[];
-  DATE_FROM=null; DATE_TO=null;
+  RAW=[]; PIV=[]; F_RAW=[]; F_PIV=[]; F_BY_WH=[]; F_BY_DATE=[]; F_BY_USER=[]; F_TOP_DEF=[]; F_TOP_SUR=[];
+  DATE_FROM=null; DATE_TO=null; ACTIVE_PRESET='all';
   document.getElementById('dashboard').style.display='none';
   document.getElementById('upload-screen').style.display='flex';
   document.getElementById('file-input').value='';
+  document.getElementById('upload-error').style.display='none';
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────
@@ -889,7 +999,7 @@ function switchTab(tab, btn) {
 
 function renderTab(tab) {
   const el=document.getElementById('tab-content');
-  el.innerHTML='<div style="color:var(--muted);font-size:13px">Memuat...</div>';
+  el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px 0">Memuat...</div>';
   setTimeout(()=>{
     if(tab==='ringkasan') renderRingkasan();
     else if(tab==='gudang') renderGudang();
@@ -906,15 +1016,16 @@ function filterBannerHTML() {
   const parts=[];
   if(DATE_FROM) parts.push(fmtDate(DATE_FROM));
   if(DATE_TO)   parts.push(fmtDate(DATE_TO));
-  const range = parts.length===2 ? `${parts[0]} – ${parts[1]}` : (DATE_FROM?`dari ${parts[0]}`:`s/d ${parts[0]}`);
-  return `<div style="background:#fbbf2410;border:1px solid #fbbf2430;border-radius:10px;
-    padding:9px 16px;margin-bottom:16px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:8px">
-    <span style="font-size:14px">⚡</span>
-    <span><strong style="color:#fde68a">Filter tanggal aktif:</strong> ${range}
-    — menampilkan <strong style="color:#fde68a">${F_RAW.length.toLocaleString('id-ID')}</strong> dari 
-    <strong style="color:#fde68a">${RAW.length.toLocaleString('id-ID')}</strong> baris total.
-    <a href="#" onclick="clearDateFilter();return false" style="color:#fbbf24;margin-left:8px;text-decoration:underline">Reset filter</a>
+  const range = parts.length===2 ? `${parts[0]} – ${parts[1]}`
+    : (DATE_FROM ? `dari ${parts[0]}` : `s/d ${parts[0]}`);
+  return `<div class="filter-active-banner">
+    <span class="fab-icon">⚡</span>
+    <span class="fab-text">
+      <strong style="color:#fde68a">Filter aktif:</strong> ${range}
+      — <strong style="color:#fde68a">${F_RAW.length.toLocaleString('id-ID')}</strong> dari 
+      <strong style="color:#fde68a">${RAW.length.toLocaleString('id-ID')}</strong> baris
     </span>
+    <button class="fab-link" onclick="applyDateFilter(null,null,'all')">✕ Reset filter</button>
   </div>`;
 }
 
@@ -935,9 +1046,9 @@ function renderRingkasan() {
     {label:'Net Selisih Nilai', val:((t.netVal||0)<0?`-${fmtRp(Math.abs(t.netVal||0))}`:fmtRp(t.netVal||0)),
       sub:'Defisit – Surplus', color:(t.netVal||0)<0?'#ef4444':'#22c55e'},
     {label:'Selisih Qty (Defisit)', val:(t.totalDefQty||0).toLocaleString('id-ID',{maximumFractionDigits:0}),
-      sub:'Unit fisik kurang dari sistem', color:'#f87171'},
+      sub:'Unit fisik kurang', color:'#f87171'},
     {label:'Selisih Qty (Surplus)', val:`+${(t.totalSurQty||0).toLocaleString('id-ID',{maximumFractionDigits:0})}`,
-      sub:'Unit fisik lebih dari sistem', color:'#86efac'},
+      sub:'Unit fisik lebih', color:'#86efac'},
     {label:'Total Dokumen', val:String(t.totalDocs||0), sub:'MAT-RECO entries', color:'#818cf8'},
   ];
 
@@ -968,7 +1079,7 @@ function renderRingkasan() {
       <td style="color:${nc};font-weight:600">${net<0?'-'+fmtRp(Math.abs(net)):fmtRp(net)}</td>
       <td>
         <div style="font-size:11px;color:${rc};font-weight:700;margin-bottom:4px">${risk.toFixed(0)}%</div>
-        <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden;width:80px">
+        <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden;width:70px">
           <div style="width:${Math.min(risk,100).toFixed(0)}%;height:100%;background:${rc};border-radius:3px"></div>
         </div>
       </td>
@@ -1015,22 +1126,22 @@ function renderRingkasan() {
   }
   statusHtml+='</div>';
 
-  const pieData = F_BY_WH.length ? F_BY_WH : [{WH_Short:'No Data',def_val:0}];
-
   el.innerHTML=filterBannerHTML()+kpiHtml+whTable+`<div class="grid-2">
     <div class="card" id="chart-pie"></div>
     ${statusHtml}
   </div>`;
 
-  Plotly.newPlot('chart-pie',[{
-    type:'pie', labels:F_BY_WH.map(w=>w.WH_Short), values:F_BY_WH.map(w=>Math.abs(w.def_val)),
-    hole:0.55, marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
-    textinfo:'label+percent', textfont:{size:11},
-    hovertemplate:'%{label}<br>Defisit: Rp %{value:,.0f}<extra></extra>',
-  }],{
-    ...PLOT_LAY, title:{...TITLE_FONT,text:'Proporsi Defisit per Gudang'},
-    annotations:[{text:fmtRp(t.totalDefVal||0),x:0.5,y:0.5,font:{size:14,color:'#ef4444'},showarrow:false}]
-  },{responsive:true,displayModeBar:false});
+  if(F_BY_WH.length) {
+    Plotly.newPlot('chart-pie',[{
+      type:'pie', labels:F_BY_WH.map(w=>w.WH_Short), values:F_BY_WH.map(w=>Math.abs(w.def_val)),
+      hole:0.55, marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
+      textinfo:'label+percent', textfont:{size:11},
+      hovertemplate:'%{label}<br>Defisit: Rp %{value:,.0f}<extra></extra>',
+    }],{
+      ...PLOT_LAY, title:{...TITLE_FONT,text:'Proporsi Defisit per Gudang'},
+      annotations:[{text:fmtRp(t.totalDefVal||0),x:0.5,y:0.5,font:{size:13,color:'#ef4444'},showarrow:false}]
+    },{responsive:true,displayModeBar:false});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1046,22 +1157,22 @@ function renderGudang() {
     const rc=risk>80?'#ef4444':'#f59e0b';
     cardsHtml+=`<div class="card wh-card" style="border-left-color:${c}">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:16px;color:${c}">${r.WH_Short} - PD</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:15px;color:${c}">${r.WH_Short} - PD</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.docs} dokumen · ${r.items} item</div>
         </div>
-        <div style="text-align:right;margin-right:24px">
+        <div style="text-align:right;margin-right:16px">
           <div style="font-size:10px;color:var(--muted)">DEFISIT</div>
-          <div style="font-size:15px;font-weight:700;color:#ef4444">-${fmtRp(Math.abs(r.def_val))}</div>
+          <div style="font-size:14px;font-weight:700;color:#ef4444">-${fmtRp(Math.abs(r.def_val))}</div>
           <div style="font-size:11px;color:#fca5a5">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
         </div>
-        <div style="text-align:right;margin-right:24px">
+        <div style="text-align:right;margin-right:16px">
           <div style="font-size:10px;color:var(--muted)">SURPLUS</div>
-          <div style="font-size:15px;font-weight:700;color:#22c55e">+${fmtRp(r.sur_val)}</div>
+          <div style="font-size:14px;font-weight:700;color:#22c55e">+${fmtRp(r.sur_val)}</div>
           <div style="font-size:11px;color:#86efac">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:10px;color:var(--muted)">RISK RATIO</div>
+          <div style="font-size:10px;color:var(--muted)">RISK</div>
           <div style="font-size:18px;font-weight:800;color:${rc}">${risk.toFixed(0)}%</div>
         </div>
       </div>
@@ -1073,16 +1184,18 @@ function renderGudang() {
     Tidak ada data gudang untuk rentang tanggal ini.</div>`;
 
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-bar-wh"></div>
-    <div class="section-label" style="margin-bottom:16px">Detail Per Gudang</div>${cardsHtml}`;
+    <div class="section-label" style="margin-bottom:14px">Detail Per Gudang</div>${cardsHtml}`;
 
-  Plotly.newPlot('chart-bar-wh',[
-    {type:'bar',name:'Defisit',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>Math.abs(w.def_val)/1e6),
-      marker:{color:C.deficit},hovertemplate:'%{x}<br>Defisit: Rp %{y:.1f} Jt<extra></extra>'},
-    {type:'bar',name:'Surplus',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>w.sur_val/1e6),
-      marker:{color:C.surplus},hovertemplate:'%{x}<br>Surplus: Rp %{y:.1f} Jt<extra></extra>'},
-  ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit vs Surplus per Gudang (Juta Rp)'},
-    barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
-  },{responsive:true,displayModeBar:false});
+  if(F_BY_WH.length) {
+    Plotly.newPlot('chart-bar-wh',[
+      {type:'bar',name:'Defisit',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>Math.abs(w.def_val)/1e6),
+        marker:{color:C.deficit},hovertemplate:'%{x}<br>Defisit: Rp %{y:.1f} Jt<extra></extra>'},
+      {type:'bar',name:'Surplus',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>w.sur_val/1e6),
+        marker:{color:C.surplus},hovertemplate:'%{x}<br>Surplus: Rp %{y:.1f} Jt<extra></extra>'},
+    ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit vs Surplus per Gudang (Juta Rp)'},
+      barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
+    },{responsive:true,displayModeBar:false});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1097,28 +1210,30 @@ function renderTrend() {
   const labels=F_BY_DATE.map(d=>d.label||fmtDateShort(d.date));
   const colors=F_BY_DATE.map(d=>d.net_val<0?C.deficit:C.surplus);
 
-  Plotly.newPlot('chart-trend-val',[{
-    type:'scatter',mode:'lines+markers',
-    x:labels,y:F_BY_DATE.map(d=>d.net_val/1e6),
-    name:'Net Valuasi',
-    line:{color:C.neutral,width:2.5},
-    marker:{color:colors,size:8,line:{color:'#0f172a',width:2}},
-    hovertemplate:'%{x}<br>Net: Rp %{y:.1f} Jt<extra></extra>',
-  }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Trend Net Selisih Valuasi per Tanggal (Juta Rp)'},
-    shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],
-    yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
-  },{responsive:true,displayModeBar:false});
+  if(F_BY_DATE.length) {
+    Plotly.newPlot('chart-trend-val',[{
+      type:'scatter',mode:'lines+markers',
+      x:labels,y:F_BY_DATE.map(d=>d.net_val/1e6),
+      name:'Net Valuasi',
+      line:{color:C.neutral,width:2.5},
+      marker:{color:colors,size:8,line:{color:'#0f172a',width:2}},
+      hovertemplate:'%{x}<br>Net: Rp %{y:.1f} Jt<extra></extra>',
+    }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Trend Net Selisih Valuasi per Tanggal (Juta Rp)'},
+      shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],
+      yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
+    },{responsive:true,displayModeBar:false});
 
-  Plotly.newPlot('chart-trend-vol',[{
-    type:'bar',x:labels,y:F_BY_DATE.map(d=>d.items),
-    marker:{color:C.neutral},
-    hovertemplate:'%{x}<br>%{y} item<extra></extra>',name:'Jumlah Item',
-  }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Volume Item per Tanggal'},
-    yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
-  },{responsive:true,displayModeBar:false});
+    Plotly.newPlot('chart-trend-vol',[{
+      type:'bar',x:labels,y:F_BY_DATE.map(d=>d.items),
+      marker:{color:C.neutral},
+      hovertemplate:'%{x}<br>%{y} item<extra></extra>',name:'Jumlah Item',
+    }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Volume Item per Tanggal'},
+      yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
+    },{responsive:true,displayModeBar:false});
+  }
 
   const kritis=[...F_BY_DATE].sort((a,b)=>a.net_val-b.net_val).slice(0,3);
-  let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+  let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
     <span style="color:var(--warn)">▲</span>
     <span style="font-size:12px;font-weight:700;color:var(--warn);letter-spacing:0.5px">Temuan Kritis</span>
   </div>`;
@@ -1146,14 +1261,14 @@ function renderPengguna() {
     const c=WH_PAL[i%WH_PAL.length];
     const pct=Math.abs(r.def_val)/Math.abs(totDef)*100;
     cardsHtml+=`<div class="card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <div class="user-avatar" style="background:${c}30;border-color:${c};color:${c}">${(r.User_Short[0]||'?').toUpperCase()}</div>
         <div>
           <div style="font-weight:700;color:${c};font-size:13px">${r.User_Short}</div>
           <div style="font-size:11px;color:var(--muted)">${r.docs} dok · ${r.items} item</div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
         <div class="stat-mini">
           <div class="stat-mini-label">DEFISIT QTY</div>
           <div class="stat-mini-val" style="color:#ef4444">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
@@ -1164,7 +1279,7 @@ function renderPengguna() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${pct.toFixed(1)}% dari total</div>
-      <div style="background:#334155;border-radius:4px;height:7px;overflow:hidden;margin-bottom:6px">
+      <div style="background:#334155;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px">
         <div style="width:${Math.min(pct,100).toFixed(1)}%;height:100%;background:${c};border-radius:4px"></div>
       </div>
       <div style="font-size:14px;font-weight:700;color:#ef4444">${r.def_val<0?'-'+fmtRp(Math.abs(r.def_val)):fmtRp(r.def_val)}</div>
@@ -1177,19 +1292,21 @@ function renderPengguna() {
 
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-user"></div>${cardsHtml}`;
 
-  const sorted=[...F_BY_USER].sort((a,b)=>a.def_val-b.def_val);
-  Plotly.newPlot('chart-user',[{
-    type:'bar',orientation:'h',
-    x:sorted.map(u=>Math.abs(u.def_val)/1e6),
-    y:sorted.map(u=>u.User_Short),
-    marker:{color:WH_PAL.slice(0,sorted.length)},
-    hovertemplate:'%{y}<br>Defisit: Rp %{x:.2f} Jt<extra></extra>',
-    name:'Defisit Valuasi',
-  }],{...PLOT_LAY,
-    title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},
-    margin:{l:120,r:20,t:40,b:50},
-    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'}
-  },{responsive:true,displayModeBar:false});
+  if(F_BY_USER.length) {
+    const sorted=[...F_BY_USER].sort((a,b)=>a.def_val-b.def_val);
+    Plotly.newPlot('chart-user',[{
+      type:'bar',orientation:'h',
+      x:sorted.map(u=>Math.abs(u.def_val)/1e6),
+      y:sorted.map(u=>u.User_Short),
+      marker:{color:WH_PAL.slice(0,sorted.length)},
+      hovertemplate:'%{y}<br>Defisit: Rp %{x:.2f} Jt<extra></extra>',
+      name:'Defisit Valuasi',
+    }],{...PLOT_LAY,
+      title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},
+      margin:{l:120,r:20,t:40,b:50},
+      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'}
+    },{responsive:true,displayModeBar:false});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1200,40 +1317,44 @@ function renderTopItem() {
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-top-def"></div><div class="card" id="chart-top-sur"></div>`;
 
   const defLabels=F_TOP_DEF.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
-  Plotly.newPlot('chart-top-def',[{
-    type:'bar',orientation:'h',
-    x:F_TOP_DEF.map(r=>Math.abs(r.ValuasiDiff)/1e6),
-    y:defLabels,
-    marker:{color:C.deficit},
-    text:F_TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),
-    textposition:'inside',
-    customdata:F_TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
-  }],{...PLOT_LAY,
-    title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},
-    yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
-    margin:{l:280,r:20,t:40,b:50},
-    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
-    height:420,
-  },{responsive:true,displayModeBar:false});
+  if(F_TOP_DEF.length) {
+    Plotly.newPlot('chart-top-def',[{
+      type:'bar',orientation:'h',
+      x:F_TOP_DEF.map(r=>Math.abs(r.ValuasiDiff)/1e6),
+      y:defLabels,
+      marker:{color:C.deficit},
+      text:F_TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),
+      textposition:'inside',
+      customdata:F_TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
+      hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+    }],{...PLOT_LAY,
+      title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},
+      yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
+      margin:{l:280,r:20,t:40,b:50},
+      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
+      height:400,
+    },{responsive:true,displayModeBar:false});
+  }
 
   const surLabels=F_TOP_SUR.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
-  Plotly.newPlot('chart-top-sur',[{
-    type:'bar',orientation:'h',
-    x:F_TOP_SUR.map(r=>r.ValuasiDiff/1e6),
-    y:surLabels,
-    marker:{color:C.surplus},
-    text:F_TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),
-    textposition:'inside',
-    customdata:F_TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-    hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
-  }],{...PLOT_LAY,
-    title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},
-    yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
-    margin:{l:280,r:20,t:40,b:50},
-    xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
-    height:420,
-  },{responsive:true,displayModeBar:false});
+  if(F_TOP_SUR.length) {
+    Plotly.newPlot('chart-top-sur',[{
+      type:'bar',orientation:'h',
+      x:F_TOP_SUR.map(r=>r.ValuasiDiff/1e6),
+      y:surLabels,
+      marker:{color:C.surplus},
+      text:F_TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),
+      textposition:'inside',
+      customdata:F_TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
+      hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
+    }],{...PLOT_LAY,
+      title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},
+      yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
+      margin:{l:280,r:20,t:40,b:50},
+      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
+      height:400,
+    },{responsive:true,displayModeBar:false});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1303,8 +1424,7 @@ function renderDetailSummary() {
   const tipe=document.getElementById('dd-tipe')?.value||'';
   const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
   const nDocs=new Set(F_RAW.filter(r=>{
-    return (!wh||r.WH_Short===wh)&&
-           (!tipe||r.Tipe===tipe)&&
+    return (!wh||r.WH_Short===wh)&&(!tipe||r.Tipe===tipe)&&
            (!search||(r.ItemName||'').toLowerCase().includes(search)||(r.ItemCode||'').toLowerCase().includes(search));
   }).map(r=>r.ID)).size;
   const defVal=d.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
@@ -1369,8 +1489,8 @@ function renderDetailTable() {
   let tbody='<tbody>';
   page.forEach((r,ri)=>{
     const rowBg=(ri%2===1)?'background:#0b1120':'';
-    let tipeColor=r.Tipe==='Defisit'?C.deficit:r.Tipe==='Surplus'?C.surplus:C.muted;
-    tbody+=`<tr class="data-tbl-row" style="${rowBg}" onclick="showModal(${F_PIV.indexOf(r)})">`;
+    const tipeColor=r.Tipe==='Defisit'?C.deficit:r.Tipe==='Surplus'?C.surplus:C.muted;
+    tbody+=`<tr class="data-tbl-row" style="${rowBg};cursor:pointer" onclick="showModal(${F_PIV.indexOf(r)})">`;
     for(const col of DETAIL_COLS){
       let val=r[col.key];
       let style=col.num?'text-align:right':'';
@@ -1393,7 +1513,7 @@ function renderDetailTable() {
   });
   tbody+='</tbody>';
 
-  wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+  wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">
     ${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail
   </div>
   <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
@@ -1403,10 +1523,10 @@ function renderDetailTable() {
   if(pgEl) pgEl.innerHTML=`
     <button class="page-btn" onclick="goPage(1)" ${detailPage===1?'disabled':''}>«</button>
     <button class="page-btn" onclick="goPage(${detailPage-1})" ${detailPage===1?'disabled':''}>‹</button>
-    <span class="page-info">Hal ${detailPage} / ${totalPages}</span>
+    <span style="color:var(--muted)">Hal ${detailPage} / ${totalPages}</span>
     <button class="page-btn" onclick="goPage(${detailPage+1})" ${detailPage>=totalPages?'disabled':''}>›</button>
     <button class="page-btn" onclick="goPage(${totalPages})" ${detailPage>=totalPages?'disabled':''}>»</button>
-    <span style="margin-left:8px">(${detailFiltered.length} total)</span>`;
+    <span style="margin-left:6px;color:var(--muted)">(${detailFiltered.length} total)</span>`;
 }
 
 function goPage(p) {
@@ -1441,7 +1561,6 @@ function showModal(idx) {
   const accent=r.Tipe==='Defisit'?'#ef4444':'#22c55e';
   const tipeBg=r.Tipe==='Defisit'?'#ef444418':'#22c55e18';
 
-  // show only docs within current date filter
   const docs=F_RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
     .sort((a,b)=>(b.PostingDate||0)-(a.PostingDate||0));
 
@@ -1493,7 +1612,7 @@ function showModal(idx) {
       </div>
     </div>
 
-    <div class="cell-grid" style="margin-bottom:16px">
+    <div class="cell-grid" style="margin-bottom:14px">
       ${dc('Qty Sistem',smartNum(r.CurrentQty||0),'#f1f5f9')}
       ${dc('Qty Fisik',smartNum(r.Quantity||0),'#f1f5f9')}
       <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
