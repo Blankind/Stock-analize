@@ -514,17 +514,14 @@ let F_TOP_DEF=[], F_TOP_SUR=[], F_TOTALS={};
 
 let detailFiltered=[], detailPage=1, detailPageSize=50, detailSort={col:null,asc:true};
 
-// ── NUMBER FORMATTING (FIXED) ─────────────────────────────────
-// Format: titik untuk pemisah ribuan, koma untuk desimal, max 2 digit desimal
+// ── NUMBER FORMATTING ─────────────────────────────────────────
 function smartNum(v) {
   v = parseFloat(v);
   if (isNaN(v)) return '—';
-  // Bulatkan ke maks 2 desimal
   const rounded = Math.round(v * 100) / 100;
   if (Number.isInteger(rounded)) {
     return rounded.toLocaleString('id-ID');
   }
-  // Hapus trailing zero: 34.10 → 34,1 | 34.854.10 → 34.854,1
   return rounded.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 function smartSigned(v) {
@@ -663,74 +660,105 @@ function rowInDateRange(r) {
   return true;
 }
 
-function rebuildFiltered() {
-  F_RAW = RAW.filter(rowInDateRange);
-  const pivMap={};
-  for(const r of F_RAW){
-    const key=`${r.ItemCode}|||${r.WH_Short}|||${r.User_Short}`;
-    if(!pivMap[key]) pivMap[key]={
-      ItemCode:r.ItemCode, ItemName:r.ItemName, WH_Short:r.WH_Short, User_Short:r.User_Short,
-      QtyDiff:0, ValuasiDiff:0, valRateSum:0, valRateCnt:0, docs:new Set(),
-      TanggalAwal:r.PostingDate, TanggalAkhir:r.PostingDate,
-      CurrentQty:0, Quantity:0,
+// ══════════════════════════════════════════════════════════════
+// PIVOT HELPER — key: ItemCode + WH_Short (TANPA User_Short)
+// Pengguna dikumpulkan sebagai Set lalu dijoin koma
+// ══════════════════════════════════════════════════════════════
+function buildPivot(rows) {
+  const pivMap = {};
+  for (const r of rows) {
+    // KEY: hanya ItemCode + WH_Short — item yang sama di gudang yang sama digabung
+    const key = `${r.ItemCode}|||${r.WH_Short}`;
+    if (!pivMap[key]) pivMap[key] = {
+      ItemCode: r.ItemCode, ItemName: r.ItemName,
+      WH_Short: r.WH_Short,
+      users: new Set(),          // kumpulkan semua pengguna
+      QtyDiff: 0, ValuasiDiff: 0,
+      valRateSum: 0, valRateCnt: 0,
+      docs: new Set(),
+      TanggalAwal: r.PostingDate, TanggalAkhir: r.PostingDate,
+      CurrentQty: 0, Quantity: 0,
     };
-    const p=pivMap[key];
-    p.QtyDiff+=r.QtyDiff; p.ValuasiDiff+=r.ValuasiDiff;
-    p.valRateSum+=r.ValRate; p.valRateCnt++;
+    const p = pivMap[key];
+    p.QtyDiff     += r.QtyDiff;
+    p.ValuasiDiff += r.ValuasiDiff;
+    p.valRateSum  += r.ValRate;
+    p.valRateCnt  ++;
     p.docs.add(r.ID);
+    if (r.User_Short) p.users.add(r.User_Short);
     p.CurrentQty = r.CurrentQty;
     p.Quantity   = r.Quantity;
-    if(r.PostingDate&&p.TanggalAwal&&r.PostingDate<p.TanggalAwal) p.TanggalAwal=r.PostingDate;
-    if(r.PostingDate&&p.TanggalAkhir&&r.PostingDate>p.TanggalAkhir) p.TanggalAkhir=r.PostingDate;
+    if (r.PostingDate && p.TanggalAwal && r.PostingDate < p.TanggalAwal) p.TanggalAwal = r.PostingDate;
+    if (r.PostingDate && p.TanggalAkhir && r.PostingDate > p.TanggalAkhir) p.TanggalAkhir = r.PostingDate;
   }
-  F_PIV=Object.values(pivMap).map(p=>({
+  return Object.values(pivMap).map(p => ({
     ...p,
-    ValRate: p.valRateCnt?p.valRateSum/p.valRateCnt:0,
+    // Pengguna: gabungkan semua user yang terlibat, pisah koma
+    User_Short: [...p.users].sort().join(', ') || '—',
+    ValRate: p.valRateCnt ? p.valRateSum / p.valRateCnt : 0,
     Docs: p.docs.size,
-    Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
+    Tipe: p.QtyDiff < 0 ? 'Defisit' : p.QtyDiff > 0 ? 'Surplus' : 'Nol',
   }));
-  F_TOTALS.totalItems=F_PIV.length;
-  F_TOTALS.totalDocs=new Set(F_RAW.map(r=>r.ID)).size;
-  F_TOTALS.totalDefVal=F_PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
-  F_TOTALS.totalSurVal=F_PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
-  F_TOTALS.totalDefQty=F_PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
-  F_TOTALS.totalSurQty=F_PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
-  F_TOTALS.netVal=F_TOTALS.totalDefVal+F_TOTALS.totalSurVal;
-  F_TOTALS.minDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
-  F_TOTALS.maxDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
-  const whMap={};
-  for(const r of F_PIV){
-    if(!whMap[r.WH_Short]) whMap[r.WH_Short]={WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
-    const w=whMap[r.WH_Short];
-    w.items++; w.docs+=r.Docs;
-    if(r.QtyDiff<0){w.def_qty+=r.QtyDiff;w.def_val+=r.ValuasiDiff;}
-    else if(r.QtyDiff>0){w.sur_qty+=r.QtyDiff;w.sur_val+=r.ValuasiDiff;}
+}
+
+function rebuildFiltered() {
+  F_RAW = RAW.filter(rowInDateRange);
+
+  // Pivot dengan key ItemCode+WH_Short saja
+  F_PIV = buildPivot(F_RAW);
+
+  F_TOTALS.totalItems = F_PIV.length;
+  F_TOTALS.totalDocs  = new Set(F_RAW.map(r => r.ID)).size;
+  F_TOTALS.totalDefVal = F_PIV.filter(r => r.ValuasiDiff < 0).reduce((a, r) => a + r.ValuasiDiff, 0);
+  F_TOTALS.totalSurVal = F_PIV.filter(r => r.ValuasiDiff > 0).reduce((a, r) => a + r.ValuasiDiff, 0);
+  F_TOTALS.totalDefQty = F_PIV.filter(r => r.QtyDiff < 0).reduce((a, r) => a + r.QtyDiff, 0);
+  F_TOTALS.totalSurQty = F_PIV.filter(r => r.QtyDiff > 0).reduce((a, r) => a + r.QtyDiff, 0);
+  F_TOTALS.netVal      = F_TOTALS.totalDefVal + F_TOTALS.totalSurVal;
+  F_TOTALS.minDate     = F_RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a, null);
+  F_TOTALS.maxDate     = F_RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a, null);
+
+  // By Warehouse
+  const whMap = {};
+  for (const r of F_PIV) {
+    if (!whMap[r.WH_Short]) whMap[r.WH_Short] = {WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
+    const w = whMap[r.WH_Short];
+    w.items++; w.docs += r.Docs;
+    if (r.QtyDiff < 0) { w.def_qty += r.QtyDiff; w.def_val += r.ValuasiDiff; }
+    else if (r.QtyDiff > 0) { w.sur_qty += r.QtyDiff; w.sur_val += r.ValuasiDiff; }
   }
-  F_BY_WH=Object.values(whMap).map(w=>({
+  F_BY_WH = Object.values(whMap).map(w => ({
     ...w,
-    net_val:w.def_val+w.sur_val,
-    risk_pct:Math.abs(w.def_val)/(Math.abs(w.def_val)+Math.abs(w.sur_val)||1)*100,
-  })).sort((a,b)=>a.def_val-b.def_val);
-  const dateMap={};
-  for(const r of F_RAW){
-    if(!r.PostingDate) continue;
-    const dk=fmtDateISO(r.PostingDate);
-    if(!dk) continue;
-    if(!dateMap[dk]) dateMap[dk]={date:r.PostingDate,label:fmtDateShort(r.PostingDate),items:0,net_qty:0,net_val:0};
-    dateMap[dk].items++; dateMap[dk].net_qty+=r.QtyDiff; dateMap[dk].net_val+=r.ValuasiDiff;
+    net_val: w.def_val + w.sur_val,
+    risk_pct: Math.abs(w.def_val) / (Math.abs(w.def_val) + Math.abs(w.sur_val) || 1) * 100,
+  })).sort((a,b) => a.def_val - b.def_val);
+
+  // By Date (berbasis RAW)
+  const dateMap = {};
+  for (const r of F_RAW) {
+    if (!r.PostingDate) continue;
+    const dk = fmtDateISO(r.PostingDate);
+    if (!dk) continue;
+    if (!dateMap[dk]) dateMap[dk] = {date:r.PostingDate,label:fmtDateShort(r.PostingDate),items:0,net_qty:0,net_val:0};
+    dateMap[dk].items++; dateMap[dk].net_qty += r.QtyDiff; dateMap[dk].net_val += r.ValuasiDiff;
   }
-  F_BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
-  const userMap={};
-  for(const r of F_PIV){
-    if(!userMap[r.User_Short]) userMap[r.User_Short]={User_Short:r.User_Short,docs:0,items:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
-    const u=userMap[r.User_Short];
-    u.items++; u.docs+=r.Docs;
-    if(r.QtyDiff<0){u.def_qty+=r.QtyDiff;u.def_val+=r.ValuasiDiff;}
-    else if(r.QtyDiff>0){u.sur_qty+=r.QtyDiff;u.sur_val+=r.ValuasiDiff;}
+  F_BY_DATE = Object.values(dateMap).sort((a,b) => a.date - b.date);
+
+  // By User (berbasis RAW agar per-user tetap akurat)
+  const userMap = {};
+  for (const r of F_RAW) {
+    const u = r.User_Short || '—';
+    if (!userMap[u]) userMap[u] = {User_Short:u, docs:new Set(), items:new Set(), def_qty:0, sur_qty:0, def_val:0, sur_val:0};
+    userMap[u].docs.add(r.ID);
+    userMap[u].items.add(`${r.ItemCode}|||${r.WH_Short}`);
+    if (r.QtyDiff < 0) { userMap[u].def_qty += r.QtyDiff; userMap[u].def_val += r.ValuasiDiff; }
+    else if (r.QtyDiff > 0) { userMap[u].sur_qty += r.QtyDiff; userMap[u].sur_val += r.ValuasiDiff; }
   }
-  F_BY_USER=Object.values(userMap);
-  F_TOP_DEF=[...F_PIV].filter(r=>r.QtyDiff<0).sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff).slice(0,10);
-  F_TOP_SUR=[...F_PIV].filter(r=>r.QtyDiff>0).sort((a,b)=>b.ValuasiDiff-a.ValuasiDiff).slice(0,10);
+  F_BY_USER = Object.values(userMap).map(u => ({
+    ...u, docs: u.docs.size, items: u.items.size,
+  }));
+
+  F_TOP_DEF = [...F_PIV].filter(r => r.QtyDiff < 0).sort((a,b) => a.ValuasiDiff - b.ValuasiDiff).slice(0,10);
+  F_TOP_SUR = [...F_PIV].filter(r => r.QtyDiff > 0).sort((a,b) => b.ValuasiDiff - a.ValuasiDiff).slice(0,10);
 }
 
 // ── FILE UPLOAD ───────────────────────────────────────────────
@@ -823,39 +851,18 @@ function parseExcelDate(v) {
 }
 
 function buildAggregates() {
-  const pivMap={};
-  for(const r of RAW){
-    const key=`${r.ItemCode}|||${r.WH_Short}|||${r.User_Short}`;
-    if(!pivMap[key]) pivMap[key]={
-      ItemCode:r.ItemCode, ItemName:r.ItemName, WH_Short:r.WH_Short, User_Short:r.User_Short,
-      QtyDiff:0, ValuasiDiff:0, valRateSum:0, valRateCnt:0, docs:new Set(),
-      TanggalAwal:r.PostingDate, TanggalAkhir:r.PostingDate,
-      CurrentQty:0, Quantity:0,
-    };
-    const p=pivMap[key];
-    p.QtyDiff+=r.QtyDiff; p.ValuasiDiff+=r.ValuasiDiff;
-    p.valRateSum+=r.ValRate; p.valRateCnt++;
-    p.docs.add(r.ID);
-    p.CurrentQty = r.CurrentQty;
-    p.Quantity   = r.Quantity;
-    if(r.PostingDate&&p.TanggalAwal&&r.PostingDate<p.TanggalAwal) p.TanggalAwal=r.PostingDate;
-    if(r.PostingDate&&p.TanggalAkhir&&r.PostingDate>p.TanggalAkhir) p.TanggalAkhir=r.PostingDate;
-  }
-  PIV=Object.values(pivMap).map(p=>({
-    ...p,
-    ValRate: p.valRateCnt?p.valRateSum/p.valRateCnt:0,
-    Docs: p.docs.size,
-    Tipe: p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
-  }));
-  TOTALS.totalItems=PIV.length;
-  TOTALS.totalDocs=new Set(RAW.map(r=>r.ID)).size;
-  TOTALS.totalDefVal=PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
-  TOTALS.totalSurVal=PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
-  TOTALS.totalDefQty=PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
-  TOTALS.totalSurQty=PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
-  TOTALS.netVal=TOTALS.totalDefVal+TOTALS.totalSurVal;
-  TOTALS.minDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
-  TOTALS.maxDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
+  // Pivot global (tanpa filter tanggal) — key: ItemCode+WH_Short
+  PIV = buildPivot(RAW);
+
+  TOTALS.totalItems = PIV.length;
+  TOTALS.totalDocs  = new Set(RAW.map(r => r.ID)).size;
+  TOTALS.totalDefVal = PIV.filter(r => r.ValuasiDiff < 0).reduce((a,r) => a+r.ValuasiDiff, 0);
+  TOTALS.totalSurVal = PIV.filter(r => r.ValuasiDiff > 0).reduce((a,r) => a+r.ValuasiDiff, 0);
+  TOTALS.totalDefQty = PIV.filter(r => r.QtyDiff < 0).reduce((a,r) => a+r.QtyDiff, 0);
+  TOTALS.totalSurQty = PIV.filter(r => r.QtyDiff > 0).reduce((a,r) => a+r.QtyDiff, 0);
+  TOTALS.netVal      = TOTALS.totalDefVal + TOTALS.totalSurVal;
+  TOTALS.minDate     = RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a, null);
+  TOTALS.maxDate     = RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a, null);
 }
 
 function initDateFilter() {
@@ -1247,8 +1254,11 @@ function renderDetail() {
     ...[...new Set(F_RAW.map(r=>r.WH_Short))].sort().map(w=>`<option value="${w}">${w}</option>`)
   ].join('');
   el.innerHTML=filterBannerHTML()+`
-    <div class="info-banner"><strong>Data Akumulasi per Item</strong> — 1 baris = 1 item unik (ItemCode + Gudang).
-      Item yang sama di beberapa dokumen digabung &amp; dijumlahkan. Klik baris untuk detail.</div>
+    <div class="info-banner">
+      <strong>Data Akumulasi per Item per Gudang</strong> — 1 baris = 1 item unik (ItemCode + Gudang).
+      Item yang sama di beberapa dokumen atau pengguna berbeda digabung &amp; dijumlahkan.
+      Kolom <strong>Pengguna</strong> menampilkan semua user yang terlibat. Klik baris untuk detail dokumen.
+    </div>
     <div id="detail-summary" class="summary-row"></div>
     <div class="filter-row">
       <select id="dd-wh" onchange="applyDetailFilter()">${whOpts}</select>
@@ -1279,7 +1289,8 @@ function applyDetailFilter() {
   if(tipe) data=data.filter(r=>r.Tipe===tipe);
   if(search) data=data.filter(r=>
     (r.ItemName||'').toLowerCase().includes(search)||
-    (r.ItemCode||'').toLowerCase().includes(search)
+    (r.ItemCode||'').toLowerCase().includes(search)||
+    (r.User_Short||'').toLowerCase().includes(search)
   );
   if(detailSort.col) {
     data.sort((a,b)=>{
@@ -1298,21 +1309,15 @@ function applyDetailFilter() {
 
 function renderDetailSummary() {
   const d=detailFiltered;
-  const wh=document.getElementById('dd-wh')?.value||'';
-  const tipe=document.getElementById('dd-tipe')?.value||'';
-  const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
-  const nDocs=new Set(F_RAW.filter(r=>{
-    return (!wh||r.WH_Short===wh)&&(!tipe||r.Tipe===tipe)&&
-           (!search||(r.ItemName||'').toLowerCase().includes(search)||(r.ItemCode||'').toLowerCase().includes(search));
-  }).map(r=>r.ID)).size;
   const defVal=d.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
   const surVal=d.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
   const net=defVal+surVal;
+  const totalDocs=d.reduce((a,r)=>a+r.Docs,0);
   const el=document.getElementById('detail-summary');
   if(!el) return;
   el.innerHTML=[
     {label:'Item Unik',val:d.length.toLocaleString('id-ID'),color:'#f1f5f9'},
-    {label:'Dokumen Sumber',val:nDocs.toLocaleString('id-ID'),color:'#818cf8'},
+    {label:'Dokumen Sumber',val:totalDocs.toLocaleString('id-ID'),color:'#818cf8'},
     {label:'Total Defisit',val:(defVal<0?'-':'')+fmtRp(Math.abs(defVal)),color:'#ef4444'},
     {label:'Total Surplus',val:surVal>0?'+'+fmtRp(surVal):fmtRp(surVal),color:'#22c55e'},
     {label:'Net Valuasi',val:(net<0?'-':net>0?'+':'')+fmtRp(Math.abs(net)),color:net<0?'#ef4444':'#22c55e'},
@@ -1328,21 +1333,21 @@ function setPageSize(n, btn) {
 }
 
 // ── KOLOM TABEL DETAIL ────────────────────────────────────────
-// Kolom angka rata kanan, pakai font monospace agar digit sejajar
+// Kolom Pengguna: menampilkan semua user gabungan
 const DETAIL_COLS=[
-  {key:'ItemCode',   label:'Kode',       w:'100px'},
-  {key:'ItemName',   label:'Nama Item',  w:'200px'},
-  {key:'WH_Short',   label:'Gudang',     w:'90px'},
-  {key:'User_Short', label:'Pengguna',   w:'90px'},
-  {key:'QtyDiff',    label:'Sel. Qty',   w:'80px',  num:true},
-  {key:'CurrentQty', label:'Qty Sistem', w:'85px',  num:true},
-  {key:'Quantity',   label:'Qty Fisik',  w:'80px',  num:true},
-  {key:'ValRate',    label:'Hrg Pokok',  w:'110px', num:true, rp:true},
-  {key:'ValuasiDiff',label:'Sel. Nilai', w:'120px', num:true, rp:true},
-  {key:'Docs',       label:'Dok',        w:'50px',  num:true},
-  {key:'TanggalAwal',label:'Tgl Awal',   w:'85px',  date:true},
+  {key:'ItemCode',   label:'Kode',        w:'100px'},
+  {key:'ItemName',   label:'Nama Item',   w:'200px'},
+  {key:'WH_Short',   label:'Gudang',      w:'90px'},
+  {key:'User_Short', label:'Pengguna',    w:'130px'},  // lebih lebar karena multi-user
+  {key:'QtyDiff',    label:'Sel. Qty',    w:'80px',  num:true},
+  {key:'CurrentQty', label:'Qty Sistem',  w:'85px',  num:true},
+  {key:'Quantity',   label:'Qty Fisik',   w:'80px',  num:true},
+  {key:'ValRate',    label:'Hrg Pokok',   w:'110px', num:true, rp:true},
+  {key:'ValuasiDiff',label:'Sel. Nilai',  w:'120px', num:true, rp:true},
+  {key:'Docs',       label:'Dok',         w:'50px',  num:true},
+  {key:'TanggalAwal',label:'Tgl Awal',    w:'85px',  date:true},
   {key:'TanggalAkhir',label:'Tgl Akhir', w:'85px',  date:true},
-  {key:'Tipe',       label:'Tipe',       w:'65px'},
+  {key:'Tipe',       label:'Tipe',        w:'65px'},
 ];
 
 function sortDetail(col) {
@@ -1371,16 +1376,16 @@ function renderDetailTable() {
   page.forEach((r,ri)=>{
     const rowBg=(ri%2===1)?'background:#0b1120':'';
     const tipeColor=r.Tipe==='Defisit'?C.deficit:r.Tipe==='Surplus'?C.surplus:C.muted;
-    tbody+=`<tr class="data-tbl-row" style="${rowBg};cursor:pointer" onclick="showModal(${F_PIV.indexOf(r)})">`;
+    // Cari index di F_PIV berdasarkan ItemCode+WH_Short (bukan indexOf karena objek berbeda)
+    const pivIdx = F_PIV.findIndex(p => p.ItemCode===r.ItemCode && p.WH_Short===r.WH_Short);
+    tbody+=`<tr class="data-tbl-row" style="${rowBg};cursor:pointer" onclick="showModal(${pivIdx})">`;
     for(const col of DETAIL_COLS){
       let val=r[col.key];
-      // Angka: rata kanan + font monospace agar digit sejajar
       let style = (col.num || col.date) ? 'text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace' : '';
       let display='';
       if(col.date) {
         display = fmtDateISO(val);
       } else if(col.rp) {
-        // Harga pokok & selisih nilai — format Rp dengan 2 desimal max
         const n = (val===null||val===undefined||val===''||isNaN(val)) ? '—' : smartNum(Math.abs(val));
         display = n === '—' ? '—' : `Rp\u00a0${n}`;
         style += ';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
@@ -1394,6 +1399,15 @@ function renderDetailTable() {
         }
       } else if(col.key==='Tipe') {
         display=val; style+=`;color:${tipeColor};font-weight:600`;
+      } else if(col.key==='User_Short') {
+        // Tampilkan badge jika multi-user
+        const users = (val||'').split(', ');
+        if(users.length > 1) {
+          display = `<span title="${val}" style="cursor:help">${users[0]}<span style="color:var(--neutral);font-size:10px;margin-left:4px">+${users.length-1}</span></span>`;
+        } else {
+          display = val||'—';
+        }
+        style += ';max-width:130px;overflow:hidden;text-overflow:ellipsis';
       } else {
         display=val||'';
       }
@@ -1404,7 +1418,7 @@ function renderDetailTable() {
   tbody+='</tbody>';
 
   wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">
-    ${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail
+    ${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail dokumen per pengguna
   </div>
   <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
     <table class="data-tbl" style="width:100%;border-collapse:collapse">${thead}${tbody}</table>
@@ -1428,7 +1442,8 @@ function goPage(p) {
 // ── EXPORT EXCEL ──────────────────────────────────────────────
 function exportDetail() {
   const data=detailFiltered.map(r=>({
-    'Kode':r.ItemCode,'Nama Item':r.ItemName,'Gudang':r.WH_Short,'Pengguna':r.User_Short,
+    'Kode':r.ItemCode,'Nama Item':r.ItemName,'Gudang':r.WH_Short,
+    'Pengguna':r.User_Short,  // sudah gabungan semua user
     'Sel. Qty':r.QtyDiff,'Qty Sistem':r.CurrentQty,'Qty Fisik':r.Quantity,
     'Hrg Pokok':r.ValRate,'Sel. Nilai':r.ValuasiDiff,'Jml Dok':r.Docs,
     'Tgl Awal':fmtDateISO(r.TanggalAwal),'Tgl Akhir':fmtDateISO(r.TanggalAkhir),'Tipe':r.Tipe,
@@ -1443,7 +1458,7 @@ function exportDetail() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODAL DETAIL
+// MODAL DETAIL — tampilkan semua dokumen item+gudang ini
 // ═══════════════════════════════════════════════════════════════
 function showModal(idx) {
   const r=F_PIV[idx];
@@ -1451,6 +1466,7 @@ function showModal(idx) {
   const accent=r.Tipe==='Defisit'?'#ef4444':'#22c55e';
   const tipeBg=r.Tipe==='Defisit'?'#ef444418':'#22c55e18';
 
+  // Semua dokumen RAW untuk item+gudang ini (tidak filter by user)
   const docs=F_RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
     .sort((a,b)=>(b.PostingDate||0)-(a.PostingDate||0));
 
@@ -1473,6 +1489,9 @@ function showModal(idx) {
     </tr>`;
   });
 
+  // Tampilkan semua pengguna yang terlibat
+  const userList = r.User_Short || '—';
+
   document.getElementById('modal-panel').innerHTML=`
     <div class="modal-header">
       <div style="display:flex;align-items:center;gap:8px">
@@ -1486,7 +1505,6 @@ function showModal(idx) {
     <div class="cell-grid" style="margin-bottom:8px">
       ${dc('Kode Item',r.ItemCode,'#93c5fd')}
       ${dc('Gudang',r.WH_Short,'#f1f5f9')}
-      ${dc('Pengguna',r.User_Short,'#f1f5f9')}
       ${dc('Tgl Awal',fmtDateISO(r.TanggalAwal),'#94a3b8')}
       ${dc('Tgl Akhir',fmtDateISO(r.TanggalAkhir),'#94a3b8')}
       ${dc('Jml Dokumen',String(r.Docs),'#818cf8')}
@@ -1503,6 +1521,13 @@ function showModal(idx) {
       </div>
     </div>
 
+    <div style="margin-bottom:8px">
+      <div class="detail-cell" style="flex:none">
+        <div class="detail-cell-label">PENGGUNA YANG TERLIBAT</div>
+        <div class="detail-cell-val" style="color:#818cf8">${userList}</div>
+      </div>
+    </div>
+
     <div class="cell-grid" style="margin-bottom:14px">
       ${dc('Qty Sistem',smartNum(r.CurrentQty||0),'#f1f5f9')}
       ${dc('Qty Fisik',smartNum(r.Quantity||0),'#f1f5f9')}
@@ -1510,7 +1535,7 @@ function showModal(idx) {
         <div class="detail-cell-label">SEL. QTY (NET)</div>
         <div class="detail-cell-val" style="color:${accent}">${smartSigned(r.QtyDiff)}</div>
       </div>
-      ${dc('Hrg Pokok',smartRp(r.ValRate),'#94a3b8')}
+      ${dc('Hrg Pokok (rata-rata)',smartRp(r.ValRate),'#94a3b8')}
       <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
         <div class="detail-cell-label">SEL. NILAI (NET)</div>
         <div class="detail-cell-val" style="color:${accent}">${smartRpSigned(r.ValuasiDiff)}</div>
@@ -1518,7 +1543,7 @@ function showModal(idx) {
     </div>
 
     <div class="docs-section">
-      <div class="docs-title">📄 Dokumen Sumber <span style="font-weight:400;color:var(--muted)">${docs.length} dokumen${DATE_FROM||DATE_TO?' (difilter)':''}</span></div>
+      <div class="docs-title">📄 Dokumen Sumber <span style="font-weight:400;color:var(--muted)">${docs.length} dokumen${DATE_FROM||DATE_TO?' (difilter)':''} — semua pengguna</span></div>
       <div class="docs-scroll">
         <table style="width:100%;border-collapse:collapse">
           <thead><tr>
