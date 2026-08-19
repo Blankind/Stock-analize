@@ -856,7 +856,7 @@ function parseExcelDate(v) {
     const tmp = new Date(utcMs);
     return new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate());
   }
-  const d = new Date(v);
+  const d = new Date(v+1);
   if(isNaN(d.getTime())) return null;
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
