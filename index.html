@@ -837,17 +837,28 @@ function toNum(v) {
   return parseFloat(String(v).replace(/,/g,'')) || 0;
 }
 
+// SESUDAH — fix timezone shift
 function parseExcelDate(v) {
   if(!v) return null;
-  if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  if(v instanceof Date) {
+    if(isNaN(v.getTime())) return null;
+    // SheetJS cellDates:true kadang kirim UTC midnight → ambil komponen local
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  }
   if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) {
-    const d = new Date(v); return isNaN(d.getTime()) ? null : d;
+    // "2025-01-15" parsed as UTC oleh new Date() → shift ke local
+    const [yr, mo, dy] = v.split('T')[0].split('-').map(Number);
+    return new Date(yr, mo - 1, dy);
   }
   if(typeof v==='number') {
-    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
-    return isNaN(d.getTime()) ? null : d;
+    // Excel serial: konversi ke UTC ms lalu ambil komponen tanggalnya
+    const utcMs = Math.round((v - 25569) * 86400 * 1000);
+    const tmp = new Date(utcMs);
+    return new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate());
   }
-  const d = new Date(v); return isNaN(d.getTime()) ? null : d;
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function buildAggregates() {
