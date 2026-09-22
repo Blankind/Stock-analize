@@ -8,381 +8,221 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
 <style>
   :root {
-    --bg:      #080d1a;
-    --card:    #0e1729;
-    --card2:   #131f35;
-    --border:  #1e2d45;
-    --text:    #e2e8f0;
-    --muted:   #64748b;
-    --neutral: #818cf8;
-    --deficit: #f87171;
-    --surplus: #34d399;
-    --warn:    #fbbf24;
-    --font: 'Inter', 'Segoe UI', sans-serif;
+    --bg:#080d1a;--card:#0e1729;--card2:#131f35;--border:#1e2d45;
+    --text:#e2e8f0;--muted:#64748b;--neutral:#818cf8;
+    --deficit:#f87171;--surplus:#34d399;--warn:#fbbf24;
+    --old:#a78bfa;--font:'Inter','Segoe UI',sans-serif;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
 
-  /* ── UPLOAD SCREEN ── */
-  #upload-screen {
-    min-height: 100vh; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; padding: 40px 20px;
-    background: linear-gradient(160deg, #0d1a2d 0%, var(--bg) 70%);
-  }
-  .upload-logo { font-size: 11px; font-weight: 700; color: var(--neutral); letter-spacing: 2px;
-    text-transform: uppercase; background: #818cf815; border: 1px solid #818cf830;
-    border-radius: 6px; padding: 4px 14px; margin-bottom: 28px; }
-  .upload-title { font-size: 28px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.5px;
-    margin-bottom: 10px; text-align: center; }
-  .upload-sub { font-size: 14px; color: var(--muted); margin-bottom: 48px; text-align: center; }
-  .upload-box {
-    width: 100%; max-width: 500px;
-    border: 2px dashed var(--border); border-radius: 20px;
-    padding: 48px 32px; text-align: center; cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    background: var(--card);
-  }
-  .upload-box:hover, .upload-box.drag { border-color: var(--neutral); background: #818cf808; }
-  .upload-icon { font-size: 40px; margin-bottom: 16px; }
-  .upload-box h3 { font-size: 16px; font-weight: 600; color: #e2e8f0; margin-bottom: 8px; }
-  .upload-box p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-  .btn-upload {
-    display: inline-block; background: var(--neutral); color: #fff;
-    border: none; border-radius: 10px; padding: 10px 28px;
-    font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;
-  }
-  .btn-upload:hover { opacity: 0.88; }
-  #file-input { display: none; }
-  .upload-note { margin-top: 20px; font-size: 12px; color: var(--muted); }
-  .upload-note span { color: var(--surplus); }
-  #upload-error { color: var(--deficit); font-size: 13px; margin-top: 16px; display: none; }
+  /* ── UPLOAD ── */
+  #upload-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,#0d1a2d 0%,var(--bg) 70%);}
+  .upload-logo{font-size:11px;font-weight:700;color:var(--neutral);letter-spacing:2px;text-transform:uppercase;background:#818cf815;border:1px solid #818cf830;border-radius:6px;padding:4px 14px;margin-bottom:28px;}
+  .upload-title{font-size:28px;font-weight:800;color:#f1f5f9;letter-spacing:-.5px;margin-bottom:10px;text-align:center;}
+  .upload-sub{font-size:14px;color:var(--muted);margin-bottom:40px;text-align:center;}
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:820px;}
+  @media(max-width:640px){.upload-grid{grid-template-columns:1fr;}}
+  .upload-box{border:2px dashed var(--border);border-radius:20px;padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--card);}
+  .upload-box:hover,.upload-box.drag{border-color:var(--neutral);background:#818cf808;}
+  .upload-box.loaded{border-color:var(--surplus);border-style:solid;background:#34d39908;}
+  .upload-box.loaded-old{border-color:var(--old);border-style:solid;background:#a78bfa08;}
+  .upload-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:12px;}
+  .badge-new{background:#818cf820;border:1px solid #818cf840;color:var(--neutral);}
+  .badge-old{background:#a78bfa20;border:1px solid #a78bfa40;color:var(--old);}
+  .upload-icon{font-size:36px;margin-bottom:12px;}
+  .upload-box h3{font-size:15px;font-weight:600;color:#e2e8f0;margin-bottom:6px;}
+  .upload-box p{font-size:12px;color:var(--muted);margin-bottom:16px;}
+  .btn-upload{display:inline-block;border:none;border-radius:10px;padding:9px 22px;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.3px;}
+  .btn-new{background:var(--neutral);color:#fff;}
+  .btn-old{background:var(--old);color:#fff;}
+  .btn-upload:hover{opacity:.88;}
+  .file-input{display:none;}
+  .file-loaded-name{font-size:12px;margin-top:10px;font-weight:600;}
+  .upload-note{margin-top:24px;font-size:12px;color:var(--muted);}
+  .upload-note span{color:var(--surplus);}
+  #upload-error{color:var(--deficit);font-size:13px;margin-top:14px;display:none;}
+  .btn-analyze{margin-top:28px;background:linear-gradient(135deg,var(--neutral),var(--old));color:#fff;border:none;border-radius:12px;padding:14px 48px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;opacity:.4;transition:opacity .2s;}
+  .btn-analyze.ready{opacity:1;}
+  .btn-analyze:hover.ready{opacity:.9;}
 
   /* ── LOADING ── */
-  #loading-screen {
-    display: none; min-height: 100vh;
-    align-items: center; justify-content: center; flex-direction: column;
-  }
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border);
-    border-top-color: var(--neutral); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; color: var(--muted); }
+  #loading-screen{display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--neutral);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{font-size:14px;color:var(--muted);}
 
   /* ── DASHBOARD ── */
-  #dashboard { display: none; }
+  #dashboard{display:none;}
+  .header{background:linear-gradient(160deg,#0d1a2d 0%,var(--bg) 70%);border-bottom:1px solid var(--border);padding:18px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .header-left{flex:1;min-width:0;}
+  .header-badge{font-size:10px;font-weight:700;color:var(--neutral);letter-spacing:1.5px;text-transform:uppercase;background:#818cf815;border:1px solid #818cf830;border-radius:4px;padding:2px 8px;margin-right:10px;}
+  .header-sub{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+  .header-title{font-size:20px;font-weight:700;color:#f1f5f9;letter-spacing:-.5px;margin:6px 0 4px;}
+  .header-meta{font-size:12px;color:#94a3b8;}
+  .header-meta span{color:var(--border);margin:0 6px;}
+  .header-net{background:#f8717112;border:1px solid #f8717130;border-radius:12px;padding:12px 18px;text-align:right;flex-shrink:0;}
+  .header-net-label{font-size:9px;font-weight:700;color:var(--deficit);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+  .header-net-val{font-size:18px;font-weight:700;color:var(--deficit);letter-spacing:-.5px;}
+  .btn-reset{background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:600;padding:7px 14px;cursor:pointer;letter-spacing:.3px;transition:color .15s;flex-shrink:0;white-space:nowrap;}
+  .btn-reset:hover{color:var(--text);}
 
-  /* Header */
-  .header {
-    background: linear-gradient(160deg, #0d1a2d 0%, var(--bg) 70%);
-    border-bottom: 1px solid var(--border);
-    padding: 18px 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  }
-  .header-left { flex: 1; min-width: 0; }
-  .header-badge { font-size: 10px; font-weight: 700; color: var(--neutral); letter-spacing: 1.5px;
-    text-transform: uppercase; background: #818cf815; border: 1px solid #818cf830;
-    border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
-  .header-sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-  .header-title { font-size: 20px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.5px; margin: 6px 0 4px; }
-  .header-meta { font-size: 12px; color: #94a3b8; }
-  .header-meta span { color: var(--border); margin: 0 6px; }
-  .header-net {
-    background: #f8717112; border: 1px solid #f8717130;
-    border-radius: 12px; padding: 12px 18px; text-align: right; flex-shrink: 0;
-  }
-  .header-net-label { font-size: 9px; font-weight: 700; color: var(--deficit);
-    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
-  .header-net-val { font-size: 18px; font-weight: 700; color: var(--deficit); letter-spacing: -0.5px; }
-  .btn-reset { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--muted); font-size: 11px; font-weight: 600; padding: 7px 14px; cursor: pointer;
-    letter-spacing: 0.3px; transition: color 0.15s; flex-shrink: 0; white-space: nowrap; }
-  .btn-reset:hover { color: var(--text); }
-
-  /* ── DATE FILTER BAR ── */
-  #date-filter-bar {
-    background: var(--card2);
-    border-bottom: 1px solid var(--border);
-    padding: 0;
-  }
-  .dfb-inner {
-    display: flex;
-    align-items: stretch;
-    min-height: 52px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .dfb-inner::-webkit-scrollbar { display: none; }
-  .dfb-section {
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    gap: 8px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-  }
-  .dfb-section:last-child { border-right: none; }
-  .dfb-label {
-    font-size: 9px; font-weight: 700; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1.6px;
-    white-space: nowrap;
-  }
-  .dfb-range {
-    display: flex; align-items: center; gap: 6px;
-  }
-  .dfb-date-wrap {
-    display: flex; align-items: center;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 8px; overflow: hidden;
-    transition: border-color 0.15s;
-  }
-  .dfb-date-wrap:focus-within { border-color: var(--neutral); }
-  .dfb-date-lbl {
-    font-size: 10px; color: var(--muted); padding: 0 8px 0 10px;
-    white-space: nowrap; pointer-events: none; user-select: none;
-  }
-  input[type=date] {
-    background: transparent;
-    border: none;
-    padding: 8px 10px 8px 0;
-    color: var(--text);
-    font-size: 12px;
-    font-family: var(--font);
-    outline: none;
-    cursor: pointer;
-    color-scheme: dark;
-    width: 120px;
-  }
-  .dfb-sep {
-    font-size: 14px; color: var(--border); flex-shrink: 0;
-  }
-  .dfb-presets {
-    display: flex; gap: 4px;
-  }
-  .dq-btn {
-    background: transparent; border: 1px solid var(--border); border-radius: 6px;
-    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 10px;
-    cursor: pointer; letter-spacing: 0.3px; white-space: nowrap;
-    transition: all 0.12s; flex-shrink: 0;
-  }
-  .dq-btn:hover { border-color: var(--neutral); color: var(--neutral); background: #818cf808; }
-  .dq-btn.active {
-    background: #818cf820; border-color: var(--neutral);
-    color: var(--neutral);
-  }
-  .dfb-status {
-    display: flex; align-items: center; gap: 10px;
-    padding: 0 14px; flex: 1; justify-content: flex-end;
-    min-width: 0;
-  }
-  #dfb-count {
-    font-size: 11px; color: var(--muted); white-space: nowrap;
-    display: none;
-  }
-  #dfb-count.active { display: block; color: var(--warn); }
-  .btn-clear-date {
-    background: transparent; border: 1px solid transparent; border-radius: 6px;
-    color: var(--muted); font-size: 11px; font-weight: 600; padding: 5px 10px;
-    cursor: pointer; transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
-    display: none;
-  }
-  .btn-clear-date.visible { display: block; }
-  .btn-clear-date:hover { border-color: var(--deficit); color: var(--deficit); }
-
-  @media (max-width: 640px) {
-    .dfb-inner { flex-wrap: wrap; overflow-x: visible; }
-    .dfb-section { border-right: none; border-bottom: 1px solid var(--border); width: 100%; padding: 10px 12px; }
-    .dfb-section:last-child { border-bottom: none; }
-    .dfb-range { width: 100%; justify-content: space-between; }
-    .dfb-date-wrap { flex: 1; }
-    input[type=date] { width: 100%; }
-    .dfb-presets { flex-wrap: wrap; }
-    .dfb-status { justify-content: flex-start; padding: 8px 12px; width: 100%; }
-  }
+  /* Date Filter Bar */
+  #date-filter-bar{background:var(--card2);border-bottom:1px solid var(--border);padding:0;}
+  .dfb-inner{display:flex;align-items:stretch;min-height:52px;overflow-x:auto;scrollbar-width:none;}
+  .dfb-inner::-webkit-scrollbar{display:none;}
+  .dfb-section{display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;border-right:1px solid var(--border);}
+  .dfb-section:last-child{border-right:none;}
+  .dfb-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.6px;white-space:nowrap;}
+  .dfb-range{display:flex;align-items:center;gap:6px;}
+  .dfb-date-wrap{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s;}
+  .dfb-date-wrap:focus-within{border-color:var(--neutral);}
+  .dfb-date-lbl{font-size:10px;color:var(--muted);padding:0 8px 0 10px;white-space:nowrap;pointer-events:none;user-select:none;}
+  input[type=date]{background:transparent;border:none;padding:8px 10px 8px 0;color:var(--text);font-size:12px;font-family:var(--font);outline:none;cursor:pointer;color-scheme:dark;width:120px;}
+  .dfb-sep{font-size:14px;color:var(--border);flex-shrink:0;}
+  .dfb-presets{display:flex;gap:4px;}
+  .dq-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;font-weight:600;padding:5px 10px;cursor:pointer;letter-spacing:.3px;white-space:nowrap;transition:all .12s;flex-shrink:0;}
+  .dq-btn:hover{border-color:var(--neutral);color:var(--neutral);background:#818cf808;}
+  .dq-btn.active{background:#818cf820;border-color:var(--neutral);color:var(--neutral);}
+  .dfb-status{display:flex;align-items:center;gap:10px;padding:0 14px;flex:1;justify-content:flex-end;min-width:0;}
+  #dfb-count{font-size:11px;color:var(--muted);white-space:nowrap;display:none;}
+  #dfb-count.active{display:block;color:var(--warn);}
+  .btn-clear-date{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--muted);font-size:11px;font-weight:600;padding:5px 10px;cursor:pointer;transition:all .12s;white-space:nowrap;flex-shrink:0;display:none;}
+  .btn-clear-date.visible{display:block;}
+  .btn-clear-date:hover{border-color:var(--deficit);color:var(--deficit);}
 
   /* Tabs */
-  .tab-bar {
-    background: var(--bg); border-bottom: 1px solid var(--border);
-    padding: 0 16px; display: flex; gap: 0; overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab-btn {
-    padding: 0 18px; height: 44px; font-size: 12px; font-weight: 600;
-    letter-spacing: 0.4px; color: var(--muted); background: transparent;
-    border: none; border-bottom: 2px solid transparent; cursor: pointer;
-    white-space: nowrap; transition: color 0.15s, border-color 0.15s;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--neutral); border-bottom-color: var(--neutral); }
+  .tab-bar{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tab-btn{padding:0 18px;height:44px;font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--muted);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--neutral);border-bottom-color:var(--neutral);}
+  .tab-btn.tab-old{color:#a78bfa88;}
+  .tab-btn.tab-old.active{color:var(--old);border-bottom-color:var(--old);}
 
   /* Content */
-  .tab-content { padding: 24px 28px; max-width: 1360px; margin: 0 auto; }
-
-  /* Cards */
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px 22px; margin-bottom: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
-  }
-  .section-label {
-    font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.8px; border-left: 3px solid var(--neutral); padding-left: 12px;
-    margin-bottom: 18px;
-  }
+  .tab-content{padding:24px 28px;max-width:1360px;margin:0 auto;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,.35);}
+  .section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.8px;border-left:3px solid var(--neutral);padding-left:12px;margin-bottom:18px;}
+  .section-label-old{border-left-color:var(--old);}
 
   /* KPI Grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 16px; }
-  .kpi-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px 20px 20px; position: relative; overflow: hidden;
-  }
-  .kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.4px; font-weight: 600; margin-bottom: 10px; }
-  .kpi-value { font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -0.3px; }
-  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .kpi-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; opacity: 0.4; border-radius: 0 0 14px 14px; }
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;}
+  .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px 20px;position:relative;overflow:hidden;}
+  .kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:600;margin-bottom:10px;}
+  .kpi-value{font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.3px;}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;}
+  .kpi-bar{position:absolute;bottom:0;left:0;right:0;height:3px;opacity:.4;border-radius:0 0 14px 14px;}
 
   /* Table */
-  .tbl-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th { padding: 10px 14px; font-size: 10px; font-weight: 600; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1.2px; background: #080d1a;
-    border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  .tr-total td { background: var(--bg) !important; }
-  .tr-total td:first-child { font-size: 11px; font-weight: 700; color: var(--neutral); letter-spacing: 1px; }
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  th{padding:10px 14px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;background:#080d1a;border-bottom:1px solid var(--border);white-space:nowrap;}
+  td{padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  .tr-total td{background:var(--bg)!important;}
+  .tr-total td:first-child{font-size:11px;font-weight:700;color:var(--neutral);letter-spacing:1px;}
 
   /* Status bars */
-  .status-bar-track { background: #334155; border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 14px; }
-  .status-bar-fill { height: 100%; border-radius: 6px; }
+  .status-bar-track{background:#334155;border-radius:6px;height:10px;overflow:hidden;margin-bottom:14px;}
+  .status-bar-fill{height:100%;border-radius:6px;}
 
   /* Charts 2-col */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:800px){.grid-2{grid-template-columns:1fr;}}
 
   /* WH Cards */
-  .wh-card { border-left: 4px solid; }
-  .risk-track { background: #22c55e30; border-radius: 6px; height: 8px; margin-top: 12px; overflow: hidden; }
-  .risk-fill { height: 100%; border-radius: 6px; }
+  .wh-card{border-left:4px solid;}
+  .risk-track{background:#22c55e30;border-radius:6px;height:8px;margin-top:12px;overflow:hidden;}
+  .risk-fill{height:100%;border-radius:6px;}
 
   /* User Cards */
-  .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; }
-  .user-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0; border-width: 2px; border-style: solid; }
-  .stat-mini { background: #0f172a; border-radius: 8px; padding: 10px; flex: 1; }
-  .stat-mini-label { font-size: 10px; color: var(--muted); }
-  .stat-mini-val { font-size: 15px; font-weight: 700; }
+  .user-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+  .user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;border-width:2px;border-style:solid;}
+  .stat-mini{background:#0f172a;border-radius:8px;padding:10px;flex:1;}
+  .stat-mini-label{font-size:10px;color:var(--muted);}
+  .stat-mini-val{font-size:15px;font-weight:700;}
 
-  /* Warn box */
-  .warn-box { border: 1px solid #fbbf2430; background: var(--card2); }
+  .warn-box{border:1px solid #fbbf2430;background:var(--card2);}
 
-  /* Detail tab filters */
-  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  select, input[type=text] {
-    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 12px; color: var(--text); font-size: 13px; font-family: var(--font);
-    outline: none;
-  }
-  select { min-width: 140px; }
-  input[type=text] { flex: 2; min-width: 160px; }
-  select:focus, input:focus { border-color: var(--neutral); }
-  .btn-export {
-    background: var(--neutral); color: #fff; border: none; border-radius: 8px;
-    padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
-    letter-spacing: 0.3px; white-space: nowrap;
-  }
-  .btn-export:hover { opacity: 0.88; }
+  /* Filters */
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  select,input[type=text]{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;}
+  select{min-width:140px;}
+  input[type=text]{flex:2;min-width:160px;}
+  select:focus,input:focus{border-color:var(--neutral);}
+  .btn-export{background:var(--neutral);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.3px;white-space:nowrap;}
+  .btn-export:hover{opacity:.88;}
 
   /* Data table */
-  .data-tbl th { cursor: pointer; user-select: none; }
-  .data-tbl th:hover { color: var(--text); }
-  .data-tbl tr:nth-child(odd) td { background: #0b1120; }
-  .data-tbl tr:hover td { background: #818cf810; }
+  .data-tbl th{cursor:pointer;user-select:none;}
+  .data-tbl th:hover{color:var(--text);}
+  .data-tbl tr:nth-child(odd) td{background:#0b1120;}
+  .data-tbl tr:hover td{background:#818cf810;}
 
   /* Pagination */
-  .pagination { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
-  .page-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 4px 10px; cursor: pointer; font-size: 12px; }
-  .page-btn:hover { border-color: var(--neutral); color: var(--neutral); }
-  .page-btn:disabled { opacity: 0.35; cursor: default; }
-  .pagesize-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
-  .ps-btn { background: var(--card); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 5px 11px; cursor: pointer; font-size: 12px; }
-  .ps-btn.active, .ps-btn:hover { border-color: var(--neutral); color: var(--neutral); }
+  .pagination{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .page-btn{background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:4px 10px;cursor:pointer;font-size:12px;}
+  .page-btn:hover{border-color:var(--neutral);color:var(--neutral);}
+  .page-btn:disabled{opacity:.35;cursor:default;}
+  .pagesize-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .ps-btn{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 11px;cursor:pointer;font-size:12px;}
+  .ps-btn.active,.ps-btn:hover{border-color:var(--neutral);color:var(--neutral);}
 
-  /* Info banner */
-  .info-banner { background: #818cf810; border: 1px solid #818cf830; border-radius: 10px;
-    padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
-  .info-banner strong { color: #e2e8f0; }
+  /* Info */
+  .info-banner{background:#818cf810;border:1px solid #818cf830;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);}
+  .info-banner strong{color:#e2e8f0;}
 
   /* Summary mini cards */
-  .summary-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 14px; flex: 1; min-width: 130px; }
-  .mini-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.2px; margin-bottom: 6px; font-weight: 600; }
-  .mini-val { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .mini-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;min-width:130px;}
+  .mini-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px;font-weight:600;}
+  .mini-val{font-size:16px;font-weight:700;letter-spacing:-.3px;}
 
   /* Filter active banner */
-  .filter-active-banner {
-    background: #fbbf2410; border: 1px solid #fbbf2430; border-radius: 10px;
-    padding: 9px 14px; margin-bottom: 14px; font-size: 12px;
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
-  .fab-icon { font-size: 13px; flex-shrink: 0; }
-  .fab-text { color: #fbbf24; flex: 1; min-width: 0; }
-  .fab-link { color: #fbbf24; text-decoration: underline; cursor: pointer; white-space: nowrap;
-    background: none; border: none; font-size: 12px; padding: 0; font-family: var(--font); }
-  .fab-link:hover { opacity: 0.8; }
+  .filter-active-banner{background:#fbbf2410;border:1px solid #fbbf2430;border-radius:10px;padding:9px 14px;margin-bottom:14px;font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .fab-icon{font-size:13px;flex-shrink:0;}
+  .fab-text{color:#fbbf24;flex:1;min-width:0;}
+  .fab-link{color:#fbbf24;text-decoration:underline;cursor:pointer;white-space:nowrap;background:none;border:none;font-size:12px;padding:0;font-family:var(--font);}
+  .fab-link:hover{opacity:.8;}
+
+  /* OLD RECO comparison */
+  .old-badge{display:inline-block;background:#a78bfa20;border:1px solid #a78bfa40;color:var(--old);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-left:6px;}
+  .new-badge{display:inline-block;background:#818cf820;border:1px solid #818cf840;color:var(--neutral);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-left:6px;}
+  .cmp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:8px;}
+  .cmp-arrow{font-size:16px;color:var(--muted);text-align:center;}
+  .cmp-val-new{padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);}
+  .cmp-val-old{padding:10px 14px;border-radius:10px;background:#a78bfa08;border:1px solid #a78bfa30;}
+  .delta-badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;}
+  .delta-better{background:#34d39915;border:1px solid #34d39940;color:#34d399;}
+  .delta-worse{background:#f8717115;border:1px solid #f8717140;color:#f87171;}
+  .delta-same{background:#64748b15;border:1px solid #64748b40;color:#64748b;}
 
   /* Modal */
-  #modal-overlay {
-    position: fixed; inset: 0; z-index: 9998;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
-    display: none; align-items: center; justify-content: center; padding: 16px;
-  }
-  #modal-overlay.open { display: flex; }
-  .modal-panel {
-    background: var(--card); border-radius: 16px; padding: 16px 20px 20px;
-    width: 860px; max-width: 100%; max-height: 90vh; overflow-y: auto;
-    position: relative;
-  }
-  .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; background: var(--card); z-index: 10;
-  }
-  .modal-close { cursor: pointer; font-size: 13px; color: var(--muted); padding: 2px 8px;
-    background: var(--card2); border-radius: 4px; border: none; }
-  .modal-close:hover { color: var(--text); }
-  .cell-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-  .detail-cell { background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 12px; flex: 1; min-width: 100px; }
-  .detail-cell-label { font-size: 9px; color: var(--muted); text-transform: uppercase;
-    letter-spacing: 1.3px; margin-bottom: 6px; font-weight: 600; }
-  .detail-cell-val { font-size: 13px; font-weight: 500; color: #e2e8f0; word-break: break-word; }
-  .detail-cell.big .detail-cell-val { font-size: 15px; font-weight: 700; }
-  .tipe-badge { display: inline-block; border-radius: 20px; padding: 3px 12px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-  .docs-section { background: var(--bg); border-radius: 10px; padding: 12px 14px;
-    border: 1px solid var(--border); }
-  .docs-title { font-weight: 700; font-size: 11px; color: #e2e8f0; text-transform: uppercase;
-    letter-spacing: 1.4px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .docs-scroll { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-  .docs-scroll table th { text-align: right; }
-  .docs-scroll table th:first-child, .docs-scroll table th:nth-child(2),
-  .docs-scroll table th:nth-child(3), .docs-scroll table th:last-child { text-align: left; }
-  .docs-scroll table td { text-align: right; }
-  .docs-scroll table td:first-child, .docs-scroll table td:nth-child(2),
-  .docs-scroll table td:nth-child(3), .docs-scroll table td:last-child { text-align: left; }
+  #modal-overlay{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;}
+  #modal-overlay.open{display:flex;}
+  .modal-panel{background:var(--card);border-radius:16px;padding:16px 20px 20px;width:860px;max-width:100%;max-height:90vh;overflow-y:auto;position:relative;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:10;}
+  .modal-close{cursor:pointer;font-size:13px;color:var(--muted);padding:2px 8px;background:var(--card2);border-radius:4px;border:none;}
+  .modal-close:hover{color:var(--text);}
+  .cell-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .detail-cell{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;flex:1;min-width:100px;}
+  .detail-cell-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.3px;margin-bottom:6px;font-weight:600;}
+  .detail-cell-val{font-size:13px;font-weight:500;color:#e2e8f0;word-break:break-word;}
+  .detail-cell.big .detail-cell-val{font-size:15px;font-weight:700;}
+  .tipe-badge{display:inline-block;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;}
+  .docs-section{background:var(--bg);border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+  .docs-title{font-weight:700;font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .docs-scroll{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
 
-  @media (max-width: 700px) {
-    .header { padding: 14px 14px; }
-    .tab-content { padding: 14px 12px; }
-    .tab-bar { padding: 0 8px; }
-    .kpi-grid { grid-template-columns: 1fr 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-    .filter-row { flex-direction: column; }
-    .header-net { display: none; }
+  @media(max-width:700px){
+    .header{padding:14px;}
+    .tab-content{padding:14px 12px;}
+    .tab-bar{padding:0 8px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .grid-2{grid-template-columns:1fr;}
+    .filter-row{flex-direction:column;}
+    .header-net{display:none;}
   }
 </style>
 </head>
@@ -392,22 +232,40 @@
 <div id="upload-screen">
   <div class="upload-logo">ERPNext · Stock Reconciliation</div>
   <div class="upload-title">Analisa Rekonsiliasi Stok</div>
-  <div class="upload-sub">Upload file Excel untuk memulai analisis — data diproses langsung di browser</div>
-  <div class="upload-box" id="drop-zone">
-    <div class="upload-icon">📊</div>
-    <h3>Upload File Excel</h3>
-    <p>Drag &amp; drop file ke sini, atau klik tombol di bawah</p>
-    <label class="btn-upload" for="file-input">Pilih File Excel</label>
-    <input type="file" id="file-input" accept=".xlsx,.xls">
+  <div class="upload-sub">Upload file BARU + file LAMA untuk analisis &amp; perbandingan — data diproses di browser</div>
+  <div class="upload-grid">
+    <!-- NEW FILE -->
+    <div class="upload-box" id="drop-zone-new">
+      <div class="upload-badge badge-new">◉ File Terbaru</div>
+      <div class="upload-icon">📊</div>
+      <h3>Rekonsiliasi Terbaru</h3>
+      <p>Format ERPNext export standar<br>(kolom Sr, ID, Status, ...)</p>
+      <label class="btn-upload btn-new" for="file-input-new">Pilih File</label>
+      <input type="file" class="file-input" id="file-input-new" accept=".xlsx,.xls">
+      <div class="file-loaded-name" id="new-file-name" style="color:var(--surplus);display:none"></div>
+    </div>
+    <!-- OLD FILE -->
+    <div class="upload-box" id="drop-zone-old">
+      <div class="upload-badge badge-old">◎ File Referensi Lama</div>
+      <div class="upload-icon">📁</div>
+      <h3>Rekonsiliasi Sebelumnya</h3>
+      <p>Format OLD RECO<br>(kolom Document, Owner, Reconciled Qty, ...)</p>
+      <label class="btn-upload btn-old" for="file-input-old">Pilih File</label>
+      <input type="file" class="file-input" id="file-input-old" accept=".xlsx,.xls">
+      <div class="file-loaded-name" id="old-file-name" style="color:var(--old);display:none"></div>
+    </div>
   </div>
-  <div class="upload-note"><span>✓</span> Data tidak dikirim ke server — semua diproses di browser kamu</div>
+  <div class="upload-note" style="margin-top:12px;text-align:center">
+    <span>✓</span> File Referensi Lama bersifat opsional — hanya diperlukan untuk fitur Perbandingan
+  </div>
+  <button class="btn-analyze" id="btn-analyze" onclick="startAnalysis()">🔍 Mulai Analisis</button>
   <div id="upload-error"></div>
 </div>
 
 <!-- LOADING SCREEN -->
 <div id="loading-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;">
   <div class="spinner"></div>
-  <div class="loading-text">Memproses data Excel...</div>
+  <div class="loading-text" id="loading-text">Memproses data Excel...</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -464,13 +322,14 @@
     </div>
   </div>
 
-  <div class="tab-bar">
+  <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" onclick="switchTab('ringkasan',this)">Ringkasan</button>
     <button class="tab-btn" onclick="switchTab('gudang',this)">Gudang</button>
     <button class="tab-btn" onclick="switchTab('trend',this)">Trend</button>
     <button class="tab-btn" onclick="switchTab('pengguna',this)">Pengguna</button>
     <button class="tab-btn" onclick="switchTab('topitem',this)">Top Item</button>
     <button class="tab-btn" onclick="switchTab('detail',this)">Data Detail</button>
+    <!-- OLD tab injected dynamically if old data exists -->
   </div>
 
   <div class="tab-content" id="tab-content"></div>
@@ -482,466 +341,426 @@
 </div>
 
 <script>
-// ── PALETTE & COLORS ──────────────────────────────────────────
-const C = {
-  deficit:'#f87171', surplus:'#34d399', neutral:'#818cf8',
-  warn:'#fbbf24', muted:'#64748b', bg:'#080d1a', card:'#0e1729',
-  card2:'#131f35', border:'#1e2d45', text:'#e2e8f0'
-};
-const WH_PAL = ['#818cf8','#34d399','#fbbf24','#f472b6','#22d3ee'];
-const PLOT_LAY = {
-  paper_bgcolor:C.card, plot_bgcolor:C.bg,
+// ── PALETTE ────────────────────────────────────────────────────
+const C={deficit:'#f87171',surplus:'#34d399',neutral:'#818cf8',old:'#a78bfa',
+  warn:'#fbbf24',muted:'#64748b',bg:'#080d1a',card:'#0e1729',card2:'#131f35',border:'#1e2d45',text:'#e2e8f0'};
+const WH_PAL=['#818cf8','#34d399','#fbbf24','#f472b6','#22d3ee'];
+const PLOT_LAY={
+  paper_bgcolor:C.card,plot_bgcolor:C.bg,
   font:{color:'#cbd5e1',family:'"Inter","Segoe UI",sans-serif',size:12},
   margin:{l:50,r:24,t:48,b:50},
   legend:{bgcolor:C.card,bordercolor:C.border,borderwidth:1},
   xaxis:{gridcolor:'#1a2840',linecolor:C.border,zerolinecolor:C.border},
   yaxis:{gridcolor:'#1a2840',linecolor:C.border,zerolinecolor:C.border},
 };
-const TITLE_FONT = {font:{size:12,color:'#94a3b8',family:'"Inter",sans-serif'},x:0.01};
+const TITLE_FONT={font:{size:12,color:'#94a3b8',family:'"Inter",sans-serif'},x:0.01};
 
-// ── GLOBAL STATE ──────────────────────────────────────────────
-let RAW=[], PIV=[];
-let TOTALS={};
+// ── STATE ──────────────────────────────────────────────────────
+let RAW=[],PIV=[],TOTALS={};
+let OLD_RAW=[],OLD_PIV=[],OLD_TOTALS={};
+let HAS_OLD=false;
 let currentTab='ringkasan';
+let DATE_FROM=null,DATE_TO=null,ACTIVE_PRESET='all';
+let F_RAW=[],F_PIV=[],F_BY_WH=[],F_BY_DATE=[],F_BY_USER=[],F_TOP_DEF=[],F_TOP_SUR=[],F_TOTALS={};
+let detailFiltered=[],detailPage=1,detailPageSize=50,detailSort={col:null,asc:true};
+let newFileRaw=null,oldFileRaw=null;
 
-// ── DATE FILTER STATE ─────────────────────────────────────────
-let DATE_FROM = null;
-let DATE_TO   = null;
-let ACTIVE_PRESET = 'all';
-
-let F_RAW=[], F_PIV=[], F_BY_WH=[], F_BY_DATE=[], F_BY_USER=[];
-let F_TOP_DEF=[], F_TOP_SUR=[], F_TOTALS={};
-
-let detailFiltered=[], detailPage=1, detailPageSize=50, detailSort={col:null,asc:true};
-
-// ── NUMBER FORMATTING ─────────────────────────────────────────
-function smartNum(v) {
-  v = parseFloat(v);
-  if (isNaN(v)) return '—';
-  const rounded = Math.round(v * 100) / 100;
-  if (Number.isInteger(rounded)) {
-    return rounded.toLocaleString('id-ID');
-  }
-  return rounded.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
-function smartSigned(v) {
-  const n = smartNum(Math.abs(v));
-  return v<0?`-${n}`:v>0?`+${n}`:n;
-}
-function smartRp(v) {
-  const n = smartNum(Math.abs(v));
-  return v<0?`-Rp ${n}`:`Rp ${n}`;
-}
-function smartRpSigned(v) {
-  const n = smartNum(Math.abs(v));
-  return v<0?`-Rp ${n}`:v>0?`+Rp ${n}`:`Rp ${n}`;
+// ── NUMBER FORMATTING ──────────────────────────────────────────
+function smartNum(v){v=parseFloat(v);if(isNaN(v))return'—';const r=Math.round(v*100)/100;return Number.isInteger(r)?r.toLocaleString('id-ID'):r.toLocaleString('id-ID',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function smartSigned(v){const n=smartNum(Math.abs(v));return v<0?`-${n}`:v>0?`+${n}`:n;}
+function smartRp(v){const n=smartNum(Math.abs(v));return n==='—'?'—':`Rp\u00a0${n}`;}
+function smartRpSigned(v){const n=smartNum(Math.abs(v));return n==='—'?'—':v<0?`-Rp\u00a0${n}`:v>0?`+Rp\u00a0${n}`:`Rp\u00a0${n}`;}
+function fmtRp(v){v=Math.abs(v);if(v>=1e9)return`Rp ${(v/1e9).toFixed(2)} M`;if(v>=1e6)return`Rp ${(v/1e6).toFixed(1)} Jt`;if(v>=1e3)return`Rp ${(v/1e3).toFixed(0)} Rb`;return`Rp ${v.toFixed(0)}`;}
+function fmtDate(d){if(!d||isNaN(new Date(d).getTime()))return'—';return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDateShort(d){if(!d||isNaN(new Date(d).getTime()))return'?';return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});}
+function fmtDateISO(d){if(!d||isNaN(new Date(d).getTime()))return'';const dt=new Date(d);return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+function toDateOnly(d){if(!d)return null;const dt=new Date(d);if(isNaN(dt.getTime()))return null;return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());}
+function toNum(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return v;return parseFloat(String(v).replace(/,/g,''))||0;}
+function parseExcelDate(v){
+  if(!v)return null;
+  if(v instanceof Date){if(isNaN(v.getTime()))return null;return new Date(v.getFullYear(),v.getMonth(),v.getDate());}
+  if(typeof v==='string'&&v.match(/^\d{4}-\d{2}-\d{2}/)){const[yr,mo,dy]=v.split('T')[0].split('-').map(Number);return new Date(yr,mo-1,dy);}
+  if(typeof v==='number'){const utcMs=Math.round((v-25569)*86400*1000);const tmp=new Date(utcMs);return new Date(tmp.getUTCFullYear(),tmp.getUTCMonth(),tmp.getUTCDate());}
+  const d=new Date(v);if(isNaN(d.getTime()))return null;return new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
 
-// ── OTHER HELPERS ─────────────────────────────────────────────
-function fmtRp(v) {
-  v = Math.abs(v);
-  if(v>=1e9) return `Rp ${(v/1e9).toFixed(2)} M`;
-  if(v>=1e6) return `Rp ${(v/1e6).toFixed(1)} Jt`;
-  if(v>=1e3) return `Rp ${(v/1e3).toFixed(0)} Rb`;
-  return `Rp ${v.toFixed(0)}`;
+// ── UPLOAD HANDLING ────────────────────────────────────────────
+function setupDrop(zoneId,inputId,type){
+  const zone=document.getElementById(zoneId);
+  const input=document.getElementById(inputId);
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0],type);});
+  input.addEventListener('change',e=>{if(e.target.files[0])readFile(e.target.files[0],type);});
 }
-function fmtDate(d) {
-  if(!d || isNaN(new Date(d).getTime())) return '—';
-  return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-}
-function fmtDateShort(d) {
-  if(!d || isNaN(new Date(d).getTime())) return '?';
-  return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
-}
-function fmtDateISO(d) {
-  if(!d || isNaN(new Date(d).getTime())) return '';
-  const dt = new Date(d);
-  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-}
-function toDateOnly(d) {
-  if(!d) return null;
-  const dt = new Date(d);
-  if(isNaN(dt.getTime())) return null;
-  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-}
+setupDrop('drop-zone-new','file-input-new','new');
+setupDrop('drop-zone-old','file-input-old','old');
 
-// ── DATE FILTER ───────────────────────────────────────────────
-function applyDateFilter(from, to, preset) {
-  DATE_FROM = from ? toDateOnly(from) : null;
-  DATE_TO   = to   ? toDateOnly(to)   : null;
-  ACTIVE_PRESET = preset || 'custom';
-  document.getElementById('df-from').value = DATE_FROM ? fmtDateISO(DATE_FROM) : '';
-  document.getElementById('df-to').value   = DATE_TO   ? fmtDateISO(DATE_TO)   : '';
-  document.querySelectorAll('.dq-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === ACTIVE_PRESET);
-  });
-  rebuildFiltered();
-  updateFilterStatusUI();
-  renderTab(currentTab);
+function readFile(file,type){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+      if(type==='new'){
+        newFileRaw=raw;
+        const nameEl=document.getElementById('new-file-name');
+        nameEl.textContent='✓ '+file.name;nameEl.style.display='block';
+        document.getElementById('drop-zone-new').classList.add('loaded');
+      } else {
+        oldFileRaw=raw;
+        const nameEl=document.getElementById('old-file-name');
+        nameEl.textContent='✓ '+file.name;nameEl.style.display='block';
+        document.getElementById('drop-zone-old').classList.add('loaded-old');
+      }
+      checkReadyState();
+    } catch(err){showError('Gagal membaca file: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
 }
 
-function onDateInputChange() {
-  const fromVal = document.getElementById('df-from').value;
-  const toVal   = document.getElementById('df-to').value;
-  const from = fromVal ? new Date(fromVal+'T00:00:00') : null;
-  const to   = toVal   ? new Date(toVal+'T00:00:00')   : null;
-  if(!from && !to) { applyDateFilter(null, null, 'all'); return; }
-  DATE_FROM = from ? toDateOnly(from) : null;
-  DATE_TO   = to   ? toDateOnly(to)   : null;
-  ACTIVE_PRESET = 'custom';
-  document.querySelectorAll('.dq-btn').forEach(btn => btn.classList.remove('active'));
-  rebuildFiltered();
-  updateFilterStatusUI();
-  renderTab(currentTab);
+function checkReadyState(){
+  const btn=document.getElementById('btn-analyze');
+  btn.classList.toggle('ready',!!newFileRaw);
 }
 
-function onPresetClick(preset) {
-  const today = toDateOnly(new Date());
-  const maxDate = TOTALS.maxDate ? toDateOnly(TOTALS.maxDate) : today;
-  const minDate = TOTALS.minDate ? toDateOnly(TOTALS.minDate) : today;
-  let from = null, to = null;
-  if(preset === 'all') { from = null; to = null; }
-  else if(preset === '7d') { to = maxDate; from = new Date(maxDate); from.setDate(from.getDate() - 6); }
-  else if(preset === '30d') { to = maxDate; from = new Date(maxDate); from.setDate(from.getDate() - 29); }
-  else if(preset === 'mtd') { to = maxDate; from = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1); }
-  else if(preset === 'q') { to = maxDate; const qStart = Math.floor(maxDate.getMonth() / 3) * 3; from = new Date(maxDate.getFullYear(), qStart, 1); }
-  else if(preset === 'ytd') { to = maxDate; from = new Date(maxDate.getFullYear(), 0, 1); }
-  if(from && minDate && from < minDate) from = minDate;
-  if(to   && maxDate && to   > maxDate) to   = maxDate;
-  applyDateFilter(from, to, preset);
-}
+function showError(msg){const el=document.getElementById('upload-error');el.textContent=msg;el.style.display='block';}
 
-function updateFilterStatusUI() {
-  const isFiltered = !!(DATE_FROM || DATE_TO);
-  const countEl    = document.getElementById('dfb-count');
-  const clearBtn   = document.getElementById('btn-clear-date');
-  if(isFiltered) {
-    const pct = RAW.length ? Math.round(F_RAW.length/RAW.length*100) : 0;
-    countEl.textContent  = `⚡ ${F_RAW.length.toLocaleString('id-ID')} / ${RAW.length.toLocaleString('id-ID')} baris (${pct}%)`;
-    countEl.classList.add('active');
-    clearBtn.classList.add('visible');
-  } else {
-    countEl.textContent = '';
-    countEl.classList.remove('active');
-    clearBtn.classList.remove('visible');
-  }
-  const netV = F_TOTALS.netVal || 0;
-  document.getElementById('header-net-val').textContent =
-    (netV<0?'-':'')+fmtRp(Math.abs(netV));
-  const minD = F_TOTALS.minDate, maxD = F_TOTALS.maxDate;
-  const filterNote = isFiltered
-    ? ` <span style="color:var(--warn);font-weight:600">·⚡ difilter</span>` : '';
-  document.getElementById('header-meta').innerHTML =
-    `Periode <strong>${fmtDate(minD)} – ${fmtDate(maxD)}</strong>`+
-    `<span>·</span>${F_TOTALS.totalItems||0} item<span>·</span>${F_TOTALS.totalDocs||0} dokumen${filterNote}`;
-}
-
-let dateDebounce = null;
-function scheduleDateInputChange() {
-  clearTimeout(dateDebounce);
-  dateDebounce = setTimeout(onDateInputChange, 350);
-}
-
-document.querySelectorAll('.dq-btn').forEach(btn => {
-  btn.addEventListener('click', () => onPresetClick(btn.dataset.preset));
-});
-['df-from','df-to'].forEach(id => {
-  const el = document.getElementById(id);
-  el.addEventListener('change', onDateInputChange);
-  el.addEventListener('input', scheduleDateInputChange);
-});
-
-function rowInDateRange(r) {
-  if(!DATE_FROM && !DATE_TO) return true;
-  const d = toDateOnly(r.PostingDate);
-  if(!d) return false;
-  if(DATE_FROM && d < DATE_FROM) return false;
-  if(DATE_TO   && d > DATE_TO)   return false;
-  return true;
-}
-
-// ══════════════════════════════════════════════════════════════
-// PIVOT HELPER — key: ItemCode + WH_Short (TANPA User_Short)
-// Pengguna dikumpulkan sebagai Set lalu dijoin koma
-// ══════════════════════════════════════════════════════════════
-function buildPivot(rows) {
-  const pivMap = {};
-  for (const r of rows) {
-    // KEY: hanya ItemCode + WH_Short — item yang sama di gudang yang sama digabung
-    const key = `${r.ItemCode}|||${r.WH_Short}`;
-    if (!pivMap[key]) pivMap[key] = {
-      ItemCode: r.ItemCode, ItemName: r.ItemName,
-      WH_Short: r.WH_Short,
-      users: new Set(),          // kumpulkan semua pengguna
-      QtyDiff: 0, ValuasiDiff: 0,
-      valRateSum: 0, valRateCnt: 0,
-      docs: new Set(),
-      TanggalAwal: r.PostingDate, TanggalAkhir: r.PostingDate,
-      CurrentQty: 0, Quantity: 0,
-    };
-    const p = pivMap[key];
-    p.QtyDiff     += r.QtyDiff;
-    p.ValuasiDiff += r.ValuasiDiff;
-    p.valRateSum  += r.ValRate;
-    p.valRateCnt  ++;
-    p.docs.add(r.ID);
-    if (r.User_Short) p.users.add(r.User_Short);
-    p.CurrentQty = r.CurrentQty;
-    p.Quantity   = r.Quantity;
-    if (r.PostingDate && p.TanggalAwal && r.PostingDate < p.TanggalAwal) p.TanggalAwal = r.PostingDate;
-    if (r.PostingDate && p.TanggalAkhir && r.PostingDate > p.TanggalAkhir) p.TanggalAkhir = r.PostingDate;
-  }
-  return Object.values(pivMap).map(p => ({
-    ...p,
-    // Pengguna: gabungkan semua user yang terlibat, pisah koma
-    User_Short: [...p.users].sort().join(', ') || '—',
-    ValRate: p.valRateCnt ? p.valRateSum / p.valRateCnt : 0,
-    Docs: p.docs.size,
-    Tipe: p.QtyDiff < 0 ? 'Defisit' : p.QtyDiff > 0 ? 'Surplus' : 'Nol',
-  }));
-}
-
-function rebuildFiltered() {
-  F_RAW = RAW.filter(rowInDateRange);
-
-  // Pivot dengan key ItemCode+WH_Short saja
-  F_PIV = buildPivot(F_RAW);
-
-  F_TOTALS.totalItems = F_PIV.length;
-  F_TOTALS.totalDocs  = new Set(F_RAW.map(r => r.ID)).size;
-  F_TOTALS.totalDefVal = F_PIV.filter(r => r.ValuasiDiff < 0).reduce((a, r) => a + r.ValuasiDiff, 0);
-  F_TOTALS.totalSurVal = F_PIV.filter(r => r.ValuasiDiff > 0).reduce((a, r) => a + r.ValuasiDiff, 0);
-  F_TOTALS.totalDefQty = F_PIV.filter(r => r.QtyDiff < 0).reduce((a, r) => a + r.QtyDiff, 0);
-  F_TOTALS.totalSurQty = F_PIV.filter(r => r.QtyDiff > 0).reduce((a, r) => a + r.QtyDiff, 0);
-  F_TOTALS.netVal      = F_TOTALS.totalDefVal + F_TOTALS.totalSurVal;
-  F_TOTALS.minDate     = F_RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a, null);
-  F_TOTALS.maxDate     = F_RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a, null);
-
-  // By Warehouse
-  const whMap = {};
-  for (const r of F_PIV) {
-    if (!whMap[r.WH_Short]) whMap[r.WH_Short] = {WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
-    const w = whMap[r.WH_Short];
-    w.items++; w.docs += r.Docs;
-    if (r.QtyDiff < 0) { w.def_qty += r.QtyDiff; w.def_val += r.ValuasiDiff; }
-    else if (r.QtyDiff > 0) { w.sur_qty += r.QtyDiff; w.sur_val += r.ValuasiDiff; }
-  }
-  F_BY_WH = Object.values(whMap).map(w => ({
-    ...w,
-    net_val: w.def_val + w.sur_val,
-    risk_pct: Math.abs(w.def_val) / (Math.abs(w.def_val) + Math.abs(w.sur_val) || 1) * 100,
-  })).sort((a,b) => a.def_val - b.def_val);
-
-  // By Date (berbasis RAW)
-  const dateMap = {};
-  for (const r of F_RAW) {
-    if (!r.PostingDate) continue;
-    const dk = fmtDateISO(r.PostingDate);
-    if (!dk) continue;
-    if (!dateMap[dk]) dateMap[dk] = {date:r.PostingDate,label:fmtDateShort(r.PostingDate),items:0,net_qty:0,net_val:0};
-    dateMap[dk].items++; dateMap[dk].net_qty += r.QtyDiff; dateMap[dk].net_val += r.ValuasiDiff;
-  }
-  F_BY_DATE = Object.values(dateMap).sort((a,b) => a.date - b.date);
-
-  // By User (berbasis RAW agar per-user tetap akurat)
-  const userMap = {};
-  for (const r of F_RAW) {
-    const u = r.User_Short || '—';
-    if (!userMap[u]) userMap[u] = {User_Short:u, docs:new Set(), items:new Set(), def_qty:0, sur_qty:0, def_val:0, sur_val:0};
-    userMap[u].docs.add(r.ID);
-    userMap[u].items.add(`${r.ItemCode}|||${r.WH_Short}`);
-    if (r.QtyDiff < 0) { userMap[u].def_qty += r.QtyDiff; userMap[u].def_val += r.ValuasiDiff; }
-    else if (r.QtyDiff > 0) { userMap[u].sur_qty += r.QtyDiff; userMap[u].sur_val += r.ValuasiDiff; }
-  }
-  F_BY_USER = Object.values(userMap).map(u => ({
-    ...u, docs: u.docs.size, items: u.items.size,
-  }));
-
-  F_TOP_DEF = [...F_PIV].filter(r => r.QtyDiff < 0).sort((a,b) => a.ValuasiDiff - b.ValuasiDiff).slice(0,10);
-  F_TOP_SUR = [...F_PIV].filter(r => r.QtyDiff > 0).sort((a,b) => b.ValuasiDiff - a.ValuasiDiff).slice(0,10);
-}
-
-// ── FILE UPLOAD ───────────────────────────────────────────────
-document.getElementById('file-input').addEventListener('change',e=>{
-  if(e.target.files[0]) processFile(e.target.files[0]);
-});
-const dropZone=document.getElementById('drop-zone');
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop',e=>{
-  e.preventDefault(); dropZone.classList.remove('drag');
-  if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
-});
-
-function showError(msg) {
-  const el=document.getElementById('upload-error');
-  el.textContent=msg; el.style.display='block';
-}
-
-function processFile(file) {
+function startAnalysis(){
+  if(!newFileRaw){showError('File Terbaru wajib diupload.');return;}
   document.getElementById('upload-screen').style.display='none';
   document.getElementById('loading-screen').style.display='flex';
   setTimeout(()=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      try {
-        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
-        parseData(raw);
-        buildAggregates();
-        initDateFilter();
-        showDashboard();
-      } catch(err) {
-        document.getElementById('loading-screen').style.display='none';
-        document.getElementById('upload-screen').style.display='flex';
-        showError('Gagal membaca file. Pastikan format kolom sesuai. '+err.message);
+    try{
+      document.getElementById('loading-text').textContent='Memproses file terbaru...';
+      parseDataNew(newFileRaw);
+      buildAggregates();
+      HAS_OLD=false;
+      if(oldFileRaw){
+        document.getElementById('loading-text').textContent='Memproses file referensi lama...';
+        parseDataOld(oldFileRaw);
+        buildOldAggregates();
+        HAS_OLD=true;
       }
-    };
-    reader.readAsArrayBuffer(file);
-  },50);
+      initDateFilter();
+      showDashboard();
+    } catch(err){
+      document.getElementById('loading-screen').style.display='none';
+      document.getElementById('upload-screen').style.display='flex';
+      showError('Gagal memproses: '+err.message);
+    }
+  },80);
 }
 
-function parseData(rows) {
+// ── PARSE NEW FORMAT ───────────────────────────────────────────
+// Columns: Sr(0) ID(1) Status(2) CostCenter(3) PostingDate(4) PostingTime(5)
+//          DiffAccount(6) Warehouse(7) ItemCode(8) ItemName(9) Quantity(10)
+//          CurrentQty(11) QtyDiff(12) ValRate(13) ... User(15)
+function parseDataNew(rows){
   let startRow=1;
-  for(let i=0;i<Math.min(5,rows.length);i++){
-    if(rows[i]&&String(rows[i][1]||'').includes('MAT')){startRow=i;break;}
-  }
+  for(let i=0;i<Math.min(5,rows.length);i++){if(rows[i]&&String(rows[i][1]||'').includes('MAT')){startRow=i;break;}}
   RAW=[];
   for(let i=startRow;i<rows.length;i++){
-    const r=rows[i];
-    if(!r||!r[1]) continue;
-    const postingDate = parseExcelDate(r[4]);
-    const qty    = toNum(r[10]);
-    const curQty = toNum(r[11]);
-    const qtyDiff= toNum(r[12]);
-    const valRate= toNum(r[13]);
-    const valuasiDiff = qtyDiff * valRate;
-    const wh = String(r[7]||'').replace(/ - PD$/,'').trim();
-    const user= String(r[15]||'').split('@')[0];
+    const r=rows[i];if(!r||!r[1])continue;
+    const postingDate=parseExcelDate(r[4]);
+    const qty=toNum(r[10]),curQty=toNum(r[11]),qtyDiff=toNum(r[12]),valRate=toNum(r[13]);
+    const valuasiDiff=qtyDiff*valRate;
+    const wh=String(r[7]||'').replace(/ - PD$/,'').trim();
+    const user=String(r[15]||'').split('@')[0];
     RAW.push({
-      Sr:r[0], ID:String(r[1]||''), Status:r[2], CostCenter:r[3],
-      PostingDate:postingDate, PostingTime:r[5],
-      DiffAccount:r[6], Warehouse:String(r[7]||''), ItemCode:String(r[8]||''),
-      ItemName:String(r[9]||''), Quantity:qty, CurrentQty:curQty,
-      QtyDiff:qtyDiff, ValRate:valRate, ValuasiDiff:valuasiDiff,
+      Sr:r[0],ID:String(r[1]||''),Status:r[2],CostCenter:r[3],
+      PostingDate:postingDate,PostingTime:r[5],DiffAccount:r[6],
+      Warehouse:String(r[7]||''),ItemCode:String(r[8]||''),ItemName:String(r[9]||''),
+      Quantity:qty,CurrentQty:curQty,QtyDiff:qtyDiff,ValRate:valRate,ValuasiDiff:valuasiDiff,
       Tipe:qtyDiff<0?'Defisit':qtyDiff>0?'Surplus':'Nol',
-      WH_Short:wh, User_Short:user,
+      WH_Short:wh,User_Short:user,
     });
   }
 }
 
-function toNum(v) {
-  if(v===null||v===undefined||v==='') return 0;
-  if(typeof v==='number') return v;
-  return parseFloat(String(v).replace(/,/g,'')) || 0;
+// ── PARSE OLD FORMAT ───────────────────────────────────────────
+// Columns: Document(0) PostingDate(1) PostingTime(2) Owner(3) ModifiedBy(4)
+//          Docstatus(5) Company(6) WHHeader(7) CostCenter(8) ItemCode(9)
+//          OriginalItemName(10) ItemName(11) FilledItemName(12) Warehouse(13)
+//          UOM(14) CurrentQty(15) ReconciledQty(16) QtyDifference(17)
+//          Price(18) ValuationRate(19) StockValueDifference(20) ...
+function parseDataOld(rows){
+  let startRow=1;
+  // auto-detect header row
+  for(let i=0;i<Math.min(5,rows.length);i++){
+    const r=rows[i];
+    if(r&&(String(r[0]||'').toLowerCase().includes('document')||String(r[0]||'').includes('MAT'))){
+      startRow=String(r[0]||'').toLowerCase().includes('document')?i+1:i;
+      break;
+    }
+  }
+  OLD_RAW=[];
+  for(let i=startRow;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[0])continue;
+    const postingDate=parseExcelDate(r[1]);
+    const curQty=toNum(r[15]),recQty=toNum(r[16]),qtyDiff=toNum(r[17]);
+    const valRate=toNum(r[19]),stockValDiff=toNum(r[20]);
+    const wh=String(r[13]||'').replace(/ - PD$/,'').trim();
+    const user=String(r[3]||'').split('@')[0];
+    OLD_RAW.push({
+      ID:String(r[0]||''),PostingDate:postingDate,PostingTime:r[2],
+      Warehouse:String(r[13]||''),ItemCode:String(r[9]||''),
+      ItemName:String(r[11]||r[10]||''),
+      Quantity:recQty,CurrentQty:curQty,QtyDiff:qtyDiff,
+      ValRate:valRate,ValuasiDiff:stockValDiff,
+      Tipe:qtyDiff<0?'Defisit':qtyDiff>0?'Surplus':'Nol',
+      WH_Short:wh,User_Short:user,
+    });
+  }
 }
 
-// SESUDAH — fix timezone shift
-function parseExcelDate(v) {
-  if(!v) return null;
-  if(v instanceof Date) {
-    if(isNaN(v.getTime())) return null;
-    // SheetJS cellDates:true kadang kirim UTC midnight → ambil komponen local
-    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+// ── PIVOT ─────────────────────────────────────────────────────
+function buildPivot(rows){
+  const pivMap={};
+  for(const r of rows){
+    const key=`${r.ItemCode}|||${r.WH_Short}`;
+    if(!pivMap[key])pivMap[key]={
+      ItemCode:r.ItemCode,ItemName:r.ItemName,WH_Short:r.WH_Short,
+      users:new Set(),QtyDiff:0,ValuasiDiff:0,valRateSum:0,valRateCnt:0,
+      docs:new Set(),TanggalAwal:r.PostingDate,TanggalAkhir:r.PostingDate,
+      CurrentQty:0,Quantity:0,
+    };
+    const p=pivMap[key];
+    p.QtyDiff+=r.QtyDiff;p.ValuasiDiff+=r.ValuasiDiff;
+    p.valRateSum+=r.ValRate;p.valRateCnt++;p.docs.add(r.ID);
+    if(r.User_Short)p.users.add(r.User_Short);
+    p.CurrentQty=r.CurrentQty;p.Quantity=r.Quantity;
+    if(r.PostingDate&&p.TanggalAwal&&r.PostingDate<p.TanggalAwal)p.TanggalAwal=r.PostingDate;
+    if(r.PostingDate&&p.TanggalAkhir&&r.PostingDate>p.TanggalAkhir)p.TanggalAkhir=r.PostingDate;
   }
-  if(typeof v==='string' && v.match(/^\d{4}-\d{2}-\d{2}/)) {
-    // "2025-01-15" parsed as UTC oleh new Date() → shift ke local
-    const [yr, mo, dy] = v.split('T')[0].split('-').map(Number);
-    return new Date(yr, mo - 1, dy);
-  }
-  if(typeof v==='number') {
-    // Excel serial: konversi ke UTC ms lalu ambil komponen tanggalnya
-    const utcMs = Math.round((v - 25569) * 86400 * 1000);
-    const tmp = new Date(utcMs);
-    return new Date(tmp.getUTCFullYear(), tmp.getUTCMonth(), tmp.getUTCDate());
-  }
-  const d = new Date(v);
-  if(isNaN(d.getTime())) return null;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Object.values(pivMap).map(p=>({
+    ...p,User_Short:[...p.users].sort().join(', ')||'—',
+    ValRate:p.valRateCnt?p.valRateSum/p.valRateCnt:0,
+    Docs:p.docs.size,Tipe:p.QtyDiff<0?'Defisit':p.QtyDiff>0?'Surplus':'Nol',
+  }));
 }
 
-function buildAggregates() {
-  // Pivot global (tanpa filter tanggal) — key: ItemCode+WH_Short
-  PIV = buildPivot(RAW);
-
-  TOTALS.totalItems = PIV.length;
-  TOTALS.totalDocs  = new Set(RAW.map(r => r.ID)).size;
-  TOTALS.totalDefVal = PIV.filter(r => r.ValuasiDiff < 0).reduce((a,r) => a+r.ValuasiDiff, 0);
-  TOTALS.totalSurVal = PIV.filter(r => r.ValuasiDiff > 0).reduce((a,r) => a+r.ValuasiDiff, 0);
-  TOTALS.totalDefQty = PIV.filter(r => r.QtyDiff < 0).reduce((a,r) => a+r.QtyDiff, 0);
-  TOTALS.totalSurQty = PIV.filter(r => r.QtyDiff > 0).reduce((a,r) => a+r.QtyDiff, 0);
-  TOTALS.netVal      = TOTALS.totalDefVal + TOTALS.totalSurVal;
-  TOTALS.minDate     = RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a, null);
-  TOTALS.maxDate     = RAW.reduce((a,r) => r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a, null);
+function buildOldAggregates(){
+  OLD_PIV=buildPivot(OLD_RAW);
+  const T=OLD_TOTALS;
+  T.totalItems=OLD_PIV.length;
+  T.totalDocs=new Set(OLD_RAW.map(r=>r.ID)).size;
+  T.totalDefVal=OLD_PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalSurVal=OLD_PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalDefQty=OLD_PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.totalSurQty=OLD_PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.netVal=T.totalDefVal+T.totalSurVal;
+  T.minDate=OLD_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
+  T.maxDate=OLD_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
 }
 
-function initDateFilter() {
-  const minISO = fmtDateISO(TOTALS.minDate);
-  const maxISO = fmtDateISO(TOTALS.maxDate);
-  const fromEl = document.getElementById('df-from');
-  const toEl   = document.getElementById('df-to');
-  if(minISO) { fromEl.min = minISO; toEl.min = minISO; }
-  if(maxISO) { fromEl.max = maxISO; toEl.max = maxISO; }
-  DATE_FROM = null; DATE_TO = null; ACTIVE_PRESET = 'all';
-  fromEl.value = ''; toEl.value = '';
-  document.querySelectorAll('.dq-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === 'all');
-  });
+function buildAggregates(){
+  PIV=buildPivot(RAW);
+  const T=TOTALS;
+  T.totalItems=PIV.length;T.totalDocs=new Set(RAW.map(r=>r.ID)).size;
+  T.totalDefVal=PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalSurVal=PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalDefQty=PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.totalSurQty=PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.netVal=T.totalDefVal+T.totalSurVal;
+  T.minDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
+  T.maxDate=RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
+}
+
+// ── DATE FILTER ────────────────────────────────────────────────
+function rowInDateRange(r){
+  if(!DATE_FROM&&!DATE_TO)return true;
+  const d=toDateOnly(r.PostingDate);if(!d)return false;
+  if(DATE_FROM&&d<DATE_FROM)return false;
+  if(DATE_TO&&d>DATE_TO)return false;
+  return true;
+}
+
+function applyDateFilter(from,to,preset){
+  DATE_FROM=from?toDateOnly(from):null;DATE_TO=to?toDateOnly(to):null;
+  ACTIVE_PRESET=preset||'custom';
+  document.getElementById('df-from').value=DATE_FROM?fmtDateISO(DATE_FROM):'';
+  document.getElementById('df-to').value=DATE_TO?fmtDateISO(DATE_TO):'';
+  document.querySelectorAll('.dq-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.preset===ACTIVE_PRESET));
+  rebuildFiltered();updateFilterStatusUI();renderTab(currentTab);
+}
+
+function onDateInputChange(){
+  const fromVal=document.getElementById('df-from').value;
+  const toVal=document.getElementById('df-to').value;
+  const from=fromVal?new Date(fromVal+'T00:00:00'):null;
+  const to=toVal?new Date(toVal+'T00:00:00'):null;
+  if(!from&&!to){applyDateFilter(null,null,'all');return;}
+  DATE_FROM=from?toDateOnly(from):null;DATE_TO=to?toDateOnly(to):null;
+  ACTIVE_PRESET='custom';
+  document.querySelectorAll('.dq-btn').forEach(btn=>btn.classList.remove('active'));
+  rebuildFiltered();updateFilterStatusUI();renderTab(currentTab);
+}
+
+function onPresetClick(preset){
+  const today=toDateOnly(new Date());
+  const maxDate=TOTALS.maxDate?toDateOnly(TOTALS.maxDate):today;
+  const minDate=TOTALS.minDate?toDateOnly(TOTALS.minDate):today;
+  let from=null,to=null;
+  if(preset==='all'){from=null;to=null;}
+  else if(preset==='7d'){to=maxDate;from=new Date(maxDate);from.setDate(from.getDate()-6);}
+  else if(preset==='30d'){to=maxDate;from=new Date(maxDate);from.setDate(from.getDate()-29);}
+  else if(preset==='mtd'){to=maxDate;from=new Date(maxDate.getFullYear(),maxDate.getMonth(),1);}
+  else if(preset==='q'){to=maxDate;const qStart=Math.floor(maxDate.getMonth()/3)*3;from=new Date(maxDate.getFullYear(),qStart,1);}
+  else if(preset==='ytd'){to=maxDate;from=new Date(maxDate.getFullYear(),0,1);}
+  if(from&&minDate&&from<minDate)from=minDate;
+  if(to&&maxDate&&to>maxDate)to=maxDate;
+  applyDateFilter(from,to,preset);
+}
+
+function updateFilterStatusUI(){
+  const isFiltered=!!(DATE_FROM||DATE_TO);
+  const countEl=document.getElementById('dfb-count');
+  const clearBtn=document.getElementById('btn-clear-date');
+  if(isFiltered){
+    const pct=RAW.length?Math.round(F_RAW.length/RAW.length*100):0;
+    countEl.textContent=`⚡ ${F_RAW.length.toLocaleString('id-ID')} / ${RAW.length.toLocaleString('id-ID')} baris (${pct}%)`;
+    countEl.classList.add('active');clearBtn.classList.add('visible');
+  } else {
+    countEl.textContent='';countEl.classList.remove('active');clearBtn.classList.remove('visible');
+  }
+  const netV=F_TOTALS.netVal||0;
+  document.getElementById('header-net-val').textContent=(netV<0?'-':'')+fmtRp(Math.abs(netV));
+  const minD=F_TOTALS.minDate,maxD=F_TOTALS.maxDate;
+  const filterNote=isFiltered?` <span style="color:var(--warn);font-weight:600">·⚡ difilter</span>`:'';
+  const oldNote=HAS_OLD?` <span style="color:var(--old)">· +Referensi Lama</span>`:'';
+  document.getElementById('header-meta').innerHTML=
+    `Periode <strong>${fmtDate(minD)} – ${fmtDate(maxD)}</strong>`+
+    `<span>·</span>${F_TOTALS.totalItems||0} item<span>·</span>${F_TOTALS.totalDocs||0} dokumen${filterNote}${oldNote}`;
+}
+
+let dateDebounce=null;
+function scheduleDateInputChange(){clearTimeout(dateDebounce);dateDebounce=setTimeout(onDateInputChange,350);}
+
+document.querySelectorAll('.dq-btn').forEach(btn=>btn.addEventListener('click',()=>onPresetClick(btn.dataset.preset)));
+['df-from','df-to'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('change',onDateInputChange);
+  el.addEventListener('input',scheduleDateInputChange);
+});
+
+function rebuildFiltered(){
+  F_RAW=RAW.filter(rowInDateRange);
+  F_PIV=buildPivot(F_RAW);
+  const T=F_TOTALS;
+  T.totalItems=F_PIV.length;T.totalDocs=new Set(F_RAW.map(r=>r.ID)).size;
+  T.totalDefVal=F_PIV.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalSurVal=F_PIV.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
+  T.totalDefQty=F_PIV.filter(r=>r.QtyDiff<0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.totalSurQty=F_PIV.filter(r=>r.QtyDiff>0).reduce((a,r)=>a+r.QtyDiff,0);
+  T.netVal=T.totalDefVal+T.totalSurVal;
+  T.minDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate<a)?r.PostingDate:a,null);
+  T.maxDate=F_RAW.reduce((a,r)=>r.PostingDate&&(!a||r.PostingDate>a)?r.PostingDate:a,null);
+  const whMap={};
+  for(const r of F_PIV){
+    if(!whMap[r.WH_Short])whMap[r.WH_Short]={WH_Short:r.WH_Short,items:0,docs:0,def_qty:0,sur_qty:0,def_val:0,sur_val:0};
+    const w=whMap[r.WH_Short];w.items++;w.docs+=r.Docs;
+    if(r.QtyDiff<0){w.def_qty+=r.QtyDiff;w.def_val+=r.ValuasiDiff;}
+    else if(r.QtyDiff>0){w.sur_qty+=r.QtyDiff;w.sur_val+=r.ValuasiDiff;}
+  }
+  F_BY_WH=Object.values(whMap).map(w=>({...w,net_val:w.def_val+w.sur_val,risk_pct:Math.abs(w.def_val)/(Math.abs(w.def_val)+Math.abs(w.sur_val)||1)*100})).sort((a,b)=>a.def_val-b.def_val);
+  const dateMap={};
+  for(const r of F_RAW){
+    if(!r.PostingDate)continue;const dk=fmtDateISO(r.PostingDate);if(!dk)continue;
+    if(!dateMap[dk])dateMap[dk]={date:r.PostingDate,label:fmtDateShort(r.PostingDate),items:0,net_qty:0,net_val:0};
+    dateMap[dk].items++;dateMap[dk].net_qty+=r.QtyDiff;dateMap[dk].net_val+=r.ValuasiDiff;
+  }
+  F_BY_DATE=Object.values(dateMap).sort((a,b)=>a.date-b.date);
+  const userMap={};
+  for(const r of F_RAW){
+    const u=r.User_Short||'—';
+    if(!userMap[u])userMap[u]={User_Short:u,docs:new Set(),items:new Set(),def_qty:0,sur_qty:0,def_val:0,sur_val:0};
+    userMap[u].docs.add(r.ID);userMap[u].items.add(`${r.ItemCode}|||${r.WH_Short}`);
+    if(r.QtyDiff<0){userMap[u].def_qty+=r.QtyDiff;userMap[u].def_val+=r.ValuasiDiff;}
+    else if(r.QtyDiff>0){userMap[u].sur_qty+=r.QtyDiff;userMap[u].sur_val+=r.ValuasiDiff;}
+  }
+  F_BY_USER=Object.values(userMap).map(u=>({...u,docs:u.docs.size,items:u.items.size}));
+  F_TOP_DEF=[...F_PIV].filter(r=>r.QtyDiff<0).sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff).slice(0,10);
+  F_TOP_SUR=[...F_PIV].filter(r=>r.QtyDiff>0).sort((a,b)=>b.ValuasiDiff-a.ValuasiDiff).slice(0,10);
+}
+
+function initDateFilter(){
+  const minISO=fmtDateISO(TOTALS.minDate),maxISO=fmtDateISO(TOTALS.maxDate);
+  const fromEl=document.getElementById('df-from'),toEl=document.getElementById('df-to');
+  if(minISO){fromEl.min=minISO;toEl.min=minISO;}
+  if(maxISO){fromEl.max=maxISO;toEl.max=maxISO;}
+  DATE_FROM=null;DATE_TO=null;ACTIVE_PRESET='all';fromEl.value='';toEl.value='';
+  document.querySelectorAll('.dq-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.preset==='all'));
   rebuildFiltered();
 }
 
-function showDashboard() {
+function showDashboard(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
+  // Inject OLD tab if needed
+  const tabBar=document.getElementById('tab-bar');
+  const existOld=tabBar.querySelector('[data-tab="perbandingan"]');
+  if(HAS_OLD&&!existOld){
+    const btn=document.createElement('button');
+    btn.className='tab-btn tab-old';btn.dataset.tab='perbandingan';
+    btn.textContent='⟷ Perbandingan';
+    btn.onclick=function(){switchTab('perbandingan',this);};
+    tabBar.appendChild(btn);
+  } else if(!HAS_OLD&&existOld){
+    existOld.remove();
+  }
   updateFilterStatusUI();
   renderTab('ringkasan');
 }
 
-function resetDashboard() {
-  RAW=[]; PIV=[]; F_RAW=[]; F_PIV=[]; F_BY_WH=[]; F_BY_DATE=[]; F_BY_USER=[]; F_TOP_DEF=[]; F_TOP_SUR=[];
-  DATE_FROM=null; DATE_TO=null; ACTIVE_PRESET='all';
+function resetDashboard(){
+  RAW=[];PIV=[];F_RAW=[];F_PIV=[];F_BY_WH=[];F_BY_DATE=[];F_BY_USER=[];F_TOP_DEF=[];F_TOP_SUR=[];
+  OLD_RAW=[];OLD_PIV=[];OLD_TOTALS={};HAS_OLD=false;
+  newFileRaw=null;oldFileRaw=null;
+  DATE_FROM=null;DATE_TO=null;ACTIVE_PRESET='all';
   document.getElementById('dashboard').style.display='none';
   document.getElementById('upload-screen').style.display='flex';
-  document.getElementById('file-input').value='';
+  document.getElementById('file-input-new').value='';
+  document.getElementById('file-input-old').value='';
   document.getElementById('upload-error').style.display='none';
+  document.getElementById('new-file-name').style.display='none';
+  document.getElementById('old-file-name').style.display='none';
+  document.getElementById('drop-zone-new').classList.remove('loaded');
+  document.getElementById('drop-zone-old').classList.remove('loaded-old');
+  document.getElementById('btn-analyze').classList.remove('ready');
+  // remove old tab
+  const existOld=document.getElementById('tab-bar').querySelector('[data-tab="perbandingan"]');
+  if(existOld)existOld.remove();
 }
 
-// ── TAB SWITCHING ─────────────────────────────────────────────
-function switchTab(tab, btn) {
+// ── TABS ───────────────────────────────────────────────────────
+function switchTab(tab,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentTab=tab;
-  renderTab(tab);
+  btn.classList.add('active');currentTab=tab;renderTab(tab);
 }
-
-function renderTab(tab) {
+function renderTab(tab){
   const el=document.getElementById('tab-content');
   el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px 0">Memuat...</div>';
   setTimeout(()=>{
-    if(tab==='ringkasan') renderRingkasan();
-    else if(tab==='gudang') renderGudang();
-    else if(tab==='trend') renderTrend();
-    else if(tab==='pengguna') renderPengguna();
-    else if(tab==='topitem') renderTopItem();
-    else if(tab==='detail') renderDetail();
+    if(tab==='ringkasan')renderRingkasan();
+    else if(tab==='gudang')renderGudang();
+    else if(tab==='trend')renderTrend();
+    else if(tab==='pengguna')renderPengguna();
+    else if(tab==='topitem')renderTopItem();
+    else if(tab==='detail')renderDetail();
+    else if(tab==='perbandingan')renderPerbandingan();
   },10);
 }
-
-function filterBannerHTML() {
-  if(!DATE_FROM && !DATE_TO) return '';
+function filterBannerHTML(){
+  if(!DATE_FROM&&!DATE_TO)return'';
   const parts=[];
-  if(DATE_FROM) parts.push(fmtDate(DATE_FROM));
-  if(DATE_TO)   parts.push(fmtDate(DATE_TO));
-  const range = parts.length===2 ? `${parts[0]} – ${parts[1]}`
-    : (DATE_FROM ? `dari ${parts[0]}` : `s/d ${parts[0]}`);
-  return `<div class="filter-active-banner">
+  if(DATE_FROM)parts.push(fmtDate(DATE_FROM));
+  if(DATE_TO)parts.push(fmtDate(DATE_TO));
+  const range=parts.length===2?`${parts[0]} – ${parts[1]}`:(DATE_FROM?`dari ${parts[0]}`:`s/d ${parts[0]}`);
+  return`<div class="filter-active-banner">
     <span class="fab-icon">⚡</span>
-    <span class="fab-text">
-      <strong style="color:#fde68a">Filter aktif:</strong> ${range}
-      — <strong style="color:#fde68a">${F_RAW.length.toLocaleString('id-ID')}</strong> dari 
-      <strong style="color:#fde68a">${RAW.length.toLocaleString('id-ID')}</strong> baris
-    </span>
+    <span class="fab-text"><strong style="color:#fde68a">Filter aktif:</strong> ${range} — <strong style="color:#fde68a">${F_RAW.length.toLocaleString('id-ID')}</strong> dari <strong style="color:#fde68a">${RAW.length.toLocaleString('id-ID')}</strong> baris</span>
     <button class="fab-link" onclick="applyDateFilter(null,null,'all')">✕ Reset filter</button>
   </div>`;
 }
@@ -949,43 +768,59 @@ function filterBannerHTML() {
 // ═══════════════════════════════════════════════════════════════
 // TAB: RINGKASAN
 // ═══════════════════════════════════════════════════════════════
-function renderRingkasan() {
+function renderRingkasan(){
   const el=document.getElementById('tab-content');
-  const t=F_TOTALS;
-  const fp=F_PIV;
-  const nDef=fp.filter(r=>r.QtyDiff<0).length;
-  const nSur=fp.filter(r=>r.QtyDiff>0).length;
-  const nNol=fp.filter(r=>r.QtyDiff===0).length;
-
+  const t=F_TOTALS,fp=F_PIV;
+  const nDef=fp.filter(r=>r.QtyDiff<0).length,nSur=fp.filter(r=>r.QtyDiff>0).length,nNol=fp.filter(r=>r.QtyDiff===0).length;
   const kpiCards=[
-    {label:'Defisit Valuasi', val:`-${fmtRp(Math.abs(t.totalDefVal||0))}`, sub:`${nDef} item berkurang`, color:'#ef4444'},
-    {label:'Surplus Valuasi', val:`+${fmtRp(t.totalSurVal||0)}`, sub:`${nSur} item bertambah`, color:'#22c55e'},
-    {label:'Net Selisih Nilai', val:((t.netVal||0)<0?`-${fmtRp(Math.abs(t.netVal||0))}`:fmtRp(t.netVal||0)),
-      sub:'Defisit – Surplus', color:(t.netVal||0)<0?'#ef4444':'#22c55e'},
-    {label:'Selisih Qty (Defisit)', val:(t.totalDefQty||0).toLocaleString('id-ID',{maximumFractionDigits:0}),
-      sub:'Unit fisik kurang', color:'#f87171'},
-    {label:'Selisih Qty (Surplus)', val:`+${(t.totalSurQty||0).toLocaleString('id-ID',{maximumFractionDigits:0})}`,
-      sub:'Unit fisik lebih', color:'#86efac'},
-    {label:'Total Dokumen', val:String(t.totalDocs||0), sub:'MAT-RECO entries', color:'#818cf8'},
+    {label:'Defisit Valuasi',val:`-${fmtRp(Math.abs(t.totalDefVal||0))}`,sub:`${nDef} item berkurang`,color:'#ef4444'},
+    {label:'Surplus Valuasi',val:`+${fmtRp(t.totalSurVal||0)}`,sub:`${nSur} item bertambah`,color:'#22c55e'},
+    {label:'Net Selisih Nilai',val:((t.netVal||0)<0?`-${fmtRp(Math.abs(t.netVal||0))}`:fmtRp(t.netVal||0)),sub:'Defisit – Surplus',color:(t.netVal||0)<0?'#ef4444':'#22c55e'},
+    {label:'Selisih Qty (Defisit)',val:(t.totalDefQty||0).toLocaleString('id-ID',{maximumFractionDigits:0}),sub:'Unit fisik kurang',color:'#f87171'},
+    {label:'Selisih Qty (Surplus)',val:`+${(t.totalSurQty||0).toLocaleString('id-ID',{maximumFractionDigits:0})}`,sub:'Unit fisik lebih',color:'#86efac'},
+    {label:'Total Dokumen',val:String(t.totalDocs||0),sub:'MAT-RECO entries',color:'#818cf8'},
   ];
-
-  let kpiHtml=`<div class="kpi-grid">`;
-  for(const k of kpiCards) kpiHtml+=`
-    <div class="kpi-card">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value" style="color:${k.color}">${k.val}</div>
-      <div class="kpi-sub">${k.sub}</div>
-      <div class="kpi-bar" style="background:${k.color}"></div>
-    </div>`;
+  let kpiHtml='<div class="kpi-grid">';
+  for(const k of kpiCards)kpiHtml+=`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="color:${k.color}">${k.val}</div><div class="kpi-sub">${k.sub}</div><div class="kpi-bar" style="background:${k.color}"></div></div>`;
   kpiHtml+='</div>';
+
+  // Old reference summary strip
+  let oldStrip='';
+  if(HAS_OLD){
+    const O=OLD_TOTALS;
+    const newNet=t.netVal||0,oldNet=O.netVal||0;
+    const delta=newNet-oldNet;
+    const deltaBetter=delta>0; // net lebih positif = lebih baik (surplus dominan)
+    const deltaColor=delta>0?'#34d399':'#f87171';
+    const deltaIcon=delta>0?'▲':'▼';
+    oldStrip=`<div class="card" style="border-left:4px solid var(--old);margin-bottom:16px">
+      <div class="section-label section-label-old" style="margin-bottom:14px">◎ Referensi Lama — ${fmtDate(O.minDate)} s/d ${fmtDate(O.maxDate)}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:160px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Net Nilai (Lama)</div>
+          <div style="font-size:18px;font-weight:700;color:${O.netVal<0?'#ef4444':'#22c55e'}">${O.netVal<0?'-'+fmtRp(Math.abs(O.netVal)):'+'+fmtRp(O.netVal)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${O.totalItems} item · ${O.totalDocs} dokumen</div>
+        </div>
+        <div style="flex:1;min-width:160px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Defisit (Lama)</div>
+          <div style="font-size:16px;font-weight:700;color:#ef4444">-${fmtRp(Math.abs(O.totalDefVal))}</div>
+        </div>
+        <div style="flex:1;min-width:160px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Surplus (Lama)</div>
+          <div style="font-size:16px;font-weight:700;color:#22c55e">+${fmtRp(O.totalSurVal)}</div>
+        </div>
+        <div style="flex-shrink:0;background:${delta>0?'#34d39915':'#f8717115'};border:1px solid ${deltaColor}40;border-radius:12px;padding:14px 20px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px">Perubahan Net</div>
+          <div style="font-size:22px;font-weight:800;color:${deltaColor}">${deltaIcon} ${fmtRp(Math.abs(delta))}</div>
+          <div style="font-size:11px;color:${deltaColor};margin-top:4px">${delta>0?'Membaik':'Memburuk'} vs lama</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">Lihat detail perbandingan di tab <strong style="color:var(--old)">⟷ Perbandingan</strong></div>
+    </div>`;
+  }
 
   let whRows='';
   const whSorted=[...F_BY_WH].sort((a,b)=>a.def_val-b.def_val);
   for(const r of whSorted){
-    const net=r.net_val;
-    const nc=net<0?'#ef4444':'#22c55e';
-    const risk=r.risk_pct;
-    const rc=risk>80?'#ef4444':risk>50?'#f59e0b':'#22c55e';
+    const net=r.net_val,nc=net<0?'#ef4444':'#22c55e';
+    const risk=r.risk_pct,rc=risk>80?'#ef4444':risk>50?'#f59e0b':'#22c55e';
     whRows+=`<tr>
       <td style="font-weight:600;color:#e2e8f0">${r.WH_Short}</td>
       <td style="color:var(--muted)">${r.items}</td>
@@ -994,17 +829,14 @@ function renderRingkasan() {
       <td style="color:#22c55e;font-weight:700">+${fmtRp(r.sur_val)}</td>
       <td style="color:var(--surplus)">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
       <td style="color:${nc};font-weight:600">${net<0?'-'+fmtRp(Math.abs(net)):fmtRp(net)}</td>
-      <td>
-        <div style="font-size:11px;color:${rc};font-weight:700;margin-bottom:4px">${risk.toFixed(0)}%</div>
+      <td><div style="font-size:11px;color:${rc};font-weight:700;margin-bottom:4px">${risk.toFixed(0)}%</div>
         <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden;width:70px">
           <div style="width:${Math.min(risk,100).toFixed(0)}%;height:100%;background:${rc};border-radius:3px"></div>
-        </div>
-      </td>
+        </div></td>
     </tr>`;
   }
   whRows+=`<tr class="tr-total">
-    <td>TOTAL</td>
-    <td style="color:var(--muted)">${t.totalItems||0}</td>
+    <td>TOTAL</td><td style="color:var(--muted)">${t.totalItems||0}</td>
     <td style="color:#ef4444;font-weight:700">-${fmtRp(Math.abs(t.totalDefVal||0))}</td>
     <td style="color:var(--deficit)">${(t.totalDefQty||0).toLocaleString('id-ID',{maximumFractionDigits:0})}</td>
     <td style="color:#22c55e;font-weight:700">+${fmtRp(t.totalSurVal||0)}</td>
@@ -1013,50 +845,34 @@ function renderRingkasan() {
     <td style="color:var(--muted)">—</td>
   </tr>`;
 
-  const whTable=`<div class="card">
-    <div class="section-label">Rekap Selisih per Gudang</div>
-    <div class="tbl-wrap"><table>
-      <thead><tr>
-        <th>Gudang</th><th>Item</th><th>Defisit Nilai</th><th>Defisit Qty</th>
-        <th>Surplus Nilai</th><th>Surplus Qty</th><th>Net Nilai</th><th>Risk Ratio</th>
-      </tr></thead>
-      <tbody>${whRows}</tbody>
-    </table></div>
-  </div>`;
-
-  const statuses=[
-    {label:'Item Defisit (net)',n:nDef,color:'#ef4444'},
-    {label:'Item Surplus (net)',n:nSur,color:'#22c55e'},
-    {label:'Item Nol (net)',n:nNol,color:'#94a3b8'},
-  ];
-  let statusHtml=`<div class="card"><div class="section-label">Distribusi Status Item</div>`;
+  const statuses=[{label:'Item Defisit (net)',n:nDef,color:'#ef4444'},{label:'Item Surplus (net)',n:nSur,color:'#22c55e'},{label:'Item Nol (net)',n:nNol,color:'#94a3b8'}];
+  let statusHtml='<div class="card"><div class="section-label">Distribusi Status Item</div>';
   for(const s of statuses){
     const pct=(t.totalItems||0)?(s.n/(t.totalItems||1)*100):0;
-    statusHtml+=`
-      <div style="margin-bottom:4px;display:flex;justify-content:space-between">
-        <span style="color:${s.color};font-weight:600;font-size:13px">${s.label}</span>
-        <span style="color:var(--muted);font-size:12px">${s.n} item (${pct.toFixed(1)}%)</span>
-      </div>
-      <div class="status-bar-track" style="margin-bottom:18px">
-        <div class="status-bar-fill" style="width:${pct.toFixed(1)}%;background:${s.color}"></div>
-      </div>`;
+    statusHtml+=`<div style="margin-bottom:4px;display:flex;justify-content:space-between">
+      <span style="color:${s.color};font-weight:600;font-size:13px">${s.label}</span>
+      <span style="color:var(--muted);font-size:12px">${s.n} item (${pct.toFixed(1)}%)</span>
+    </div><div class="status-bar-track" style="margin-bottom:18px"><div class="status-bar-fill" style="width:${pct.toFixed(1)}%;background:${s.color}"></div></div>`;
   }
   statusHtml+='</div>';
 
-  el.innerHTML=filterBannerHTML()+kpiHtml+whTable+`<div class="grid-2">
-    <div class="card" id="chart-pie"></div>
-    ${statusHtml}
-  </div>`;
+  el.innerHTML=filterBannerHTML()+kpiHtml+oldStrip+
+    `<div class="card"><div class="section-label">Rekap Selisih per Gudang</div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>Gudang</th><th>Item</th><th>Defisit Nilai</th><th>Defisit Qty</th>
+        <th>Surplus Nilai</th><th>Surplus Qty</th><th>Net Nilai</th><th>Risk Ratio</th>
+      </tr></thead><tbody>${whRows}</tbody></table></div>
+    </div>
+    <div class="grid-2"><div class="card" id="chart-pie"></div>${statusHtml}</div>`;
 
-  if(F_BY_WH.length) {
+  if(F_BY_WH.length){
     Plotly.newPlot('chart-pie',[{
-      type:'pie', labels:F_BY_WH.map(w=>w.WH_Short), values:F_BY_WH.map(w=>Math.abs(w.def_val)),
-      hole:0.55, marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
-      textinfo:'label+percent', textfont:{size:11},
+      type:'pie',labels:F_BY_WH.map(w=>w.WH_Short),values:F_BY_WH.map(w=>Math.abs(w.def_val)),
+      hole:0.55,marker:{colors:WH_PAL,line:{color:'#0f172a',width:2}},
+      textinfo:'label+percent',textfont:{size:11},
       hovertemplate:'%{label}<br>Defisit: Rp %{value:,.0f}<extra></extra>',
-    }],{
-      ...PLOT_LAY, title:{...TITLE_FONT,text:'Proporsi Defisit per Gudang'},
-      annotations:[{text:fmtRp(t.totalDefVal||0),x:0.5,y:0.5,font:{size:13,color:'#ef4444'},showarrow:false}]
+    }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Proporsi Defisit per Gudang'},
+      annotations:[{text:fmtRp(t.totalDefVal||0),x:.5,y:.5,font:{size:13,color:'#ef4444'},showarrow:false}]
     },{responsive:true,displayModeBar:false});
   }
 }
@@ -1064,220 +880,340 @@ function renderRingkasan() {
 // ═══════════════════════════════════════════════════════════════
 // TAB: GUDANG
 // ═══════════════════════════════════════════════════════════════
-function renderGudang() {
+function renderGudang(){
   const el=document.getElementById('tab-content');
   let cardsHtml='';
   F_BY_WH.forEach((r,i)=>{
-    const c=WH_PAL[i%WH_PAL.length];
-    const risk=r.risk_pct;
-    const rc=risk>80?'#ef4444':'#f59e0b';
+    const c=WH_PAL[i%WH_PAL.length],risk=r.risk_pct,rc=risk>80?'#ef4444':'#f59e0b';
     cardsHtml+=`<div class="card wh-card" style="border-left-color:${c}">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px;color:${c}">${r.WH_Short} - PD</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.docs} dokumen · ${r.items} item</div>
-        </div>
-        <div style="text-align:right;margin-right:16px">
-          <div style="font-size:10px;color:var(--muted)">DEFISIT</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:15px;color:${c}">${r.WH_Short} - PD</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.docs} dokumen · ${r.items} item</div></div>
+        <div style="text-align:right;margin-right:16px"><div style="font-size:10px;color:var(--muted)">DEFISIT</div>
           <div style="font-size:14px;font-weight:700;color:#ef4444">-${fmtRp(Math.abs(r.def_val))}</div>
-          <div style="font-size:11px;color:#fca5a5">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
-        </div>
-        <div style="text-align:right;margin-right:16px">
-          <div style="font-size:10px;color:var(--muted)">SURPLUS</div>
+          <div style="font-size:11px;color:#fca5a5">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div></div>
+        <div style="text-align:right;margin-right:16px"><div style="font-size:10px;color:var(--muted)">SURPLUS</div>
           <div style="font-size:14px;font-weight:700;color:#22c55e">+${fmtRp(r.sur_val)}</div>
-          <div style="font-size:11px;color:#86efac">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:10px;color:var(--muted)">RISK</div>
-          <div style="font-size:18px;font-weight:800;color:${rc}">${risk.toFixed(0)}%</div>
-        </div>
+          <div style="font-size:11px;color:#86efac">+${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})} qty</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--muted)">RISK</div>
+          <div style="font-size:18px;font-weight:800;color:${rc}">${risk.toFixed(0)}%</div></div>
       </div>
       <div class="risk-track"><div class="risk-fill" style="width:${risk.toFixed(0)}%;background:${rc}"></div></div>
     </div>`;
   });
-  if(!F_BY_WH.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data gudang untuk rentang tanggal ini.</div>`;
-  el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-bar-wh"></div>
-    <div class="section-label" style="margin-bottom:14px">Detail Per Gudang</div>${cardsHtml}`;
-  if(F_BY_WH.length) {
+  if(!F_BY_WH.length)cardsHtml=`<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data.</div>`;
+  el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-bar-wh"></div><div class="section-label" style="margin-bottom:14px">Detail Per Gudang</div>${cardsHtml}`;
+  if(F_BY_WH.length){
     Plotly.newPlot('chart-bar-wh',[
-      {type:'bar',name:'Defisit',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>Math.abs(w.def_val)/1e6),
-        marker:{color:C.deficit},hovertemplate:'%{x}<br>Defisit: Rp %{y:.1f} Jt<extra></extra>'},
-      {type:'bar',name:'Surplus',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>w.sur_val/1e6),
-        marker:{color:C.surplus},hovertemplate:'%{x}<br>Surplus: Rp %{y:.1f} Jt<extra></extra>'},
-    ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit vs Surplus per Gudang (Juta Rp)'},
-      barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
-    },{responsive:true,displayModeBar:false});
+      {type:'bar',name:'Defisit',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>Math.abs(w.def_val)/1e6),marker:{color:C.deficit},hovertemplate:'%{x}<br>Defisit: Rp %{y:.1f} Jt<extra></extra>'},
+      {type:'bar',name:'Surplus',x:F_BY_WH.map(w=>w.WH_Short),y:F_BY_WH.map(w=>w.sur_val/1e6),marker:{color:C.surplus},hovertemplate:'%{x}<br>Surplus: Rp %{y:.1f} Jt<extra></extra>'},
+    ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit vs Surplus per Gudang (Juta Rp)'},barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}},{responsive:true,displayModeBar:false});
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
 // TAB: TREND
 // ═══════════════════════════════════════════════════════════════
-function renderTrend() {
+function renderTrend(){
   const el=document.getElementById('tab-content');
-  el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-trend-val"></div>
-    <div class="card" id="chart-trend-vol"></div>
-    <div class="card warn-box" id="trend-kritis"></div>`;
+  el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-trend-val"></div><div class="card" id="chart-trend-vol"></div><div class="card warn-box" id="trend-kritis"></div>`;
   const labels=F_BY_DATE.map(d=>d.label||fmtDateShort(d.date));
   const colors=F_BY_DATE.map(d=>d.net_val<0?C.deficit:C.surplus);
-  if(F_BY_DATE.length) {
-    Plotly.newPlot('chart-trend-val',[{
-      type:'scatter',mode:'lines+markers',
-      x:labels,y:F_BY_DATE.map(d=>d.net_val/1e6),
-      name:'Net Valuasi',
-      line:{color:C.neutral,width:2.5},
-      marker:{color:colors,size:8,line:{color:'#0f172a',width:2}},
-      hovertemplate:'%{x}<br>Net: Rp %{y:.1f} Jt<extra></extra>',
-    }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Trend Net Selisih Valuasi per Tanggal (Juta Rp)'},
-      shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],
-      yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}
-    },{responsive:true,displayModeBar:false});
-    Plotly.newPlot('chart-trend-vol',[{
-      type:'bar',x:labels,y:F_BY_DATE.map(d=>d.items),
-      marker:{color:C.neutral},
-      hovertemplate:'%{x}<br>%{y} item<extra></extra>',name:'Jumlah Item',
-    }],{...PLOT_LAY,title:{...TITLE_FONT,text:'Volume Item per Tanggal'},
-      yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}
-    },{responsive:true,displayModeBar:false});
+  if(F_BY_DATE.length){
+    Plotly.newPlot('chart-trend-val',[{type:'scatter',mode:'lines+markers',x:labels,y:F_BY_DATE.map(d=>d.net_val/1e6),name:'Net Valuasi',
+      line:{color:C.neutral,width:2.5},marker:{color:colors,size:8,line:{color:'#0f172a',width:2}},
+      hovertemplate:'%{x}<br>Net: Rp %{y:.1f} Jt<extra></extra>'}],
+      {...PLOT_LAY,title:{...TITLE_FONT,text:'Trend Net Selisih Valuasi per Tanggal (Juta Rp)'},
+        shapes:[{type:'line',x0:0,x1:1,xref:'paper',y0:0,y1:0,line:{color:'#334155',dash:'dot'}}],yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}},
+      {responsive:true,displayModeBar:false});
+    Plotly.newPlot('chart-trend-vol',[{type:'bar',x:labels,y:F_BY_DATE.map(d=>d.items),marker:{color:C.neutral},hovertemplate:'%{x}<br>%{y} item<extra></extra>',name:'Jumlah Item'}],
+      {...PLOT_LAY,title:{...TITLE_FONT,text:'Volume Item per Tanggal'},yaxis:{...PLOT_LAY.yaxis,title:'Jumlah Item'}},{responsive:true,displayModeBar:false});
   }
   const kritis=[...F_BY_DATE].sort((a,b)=>a.net_val-b.net_val).slice(0,3);
-  let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-    <span style="color:var(--warn)">▲</span>
-    <span style="font-size:12px;font-weight:700;color:var(--warn);letter-spacing:0.5px">Temuan Kritis</span>
-  </div>`;
-  if(!kritis.length) kritisHtml += `<div style="font-size:13px;color:var(--muted)">Tidak ada data untuk rentang tanggal ini.</div>`;
-  for(const k of kritis){
-    kritisHtml+=`<div style="margin-bottom:8px;font-size:13px;color:#94a3b8">
-      <span style="color:var(--warn);margin-right:6px">·</span>
-      ${k.label||fmtDateShort(k.date)}: ${k.items} item, net valuasi ${k.net_val<0?'-Rp '+fmtRp(Math.abs(k.net_val)):'Rp '+fmtRp(k.net_val)}
-    </div>`;
-  }
+  let kritisHtml=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="color:var(--warn)">▲</span><span style="font-size:12px;font-weight:700;color:var(--warn);letter-spacing:.5px">Temuan Kritis</span></div>`;
+  if(!kritis.length)kritisHtml+=`<div style="font-size:13px;color:var(--muted)">Tidak ada data.</div>`;
+  for(const k of kritis)kritisHtml+=`<div style="margin-bottom:8px;font-size:13px;color:#94a3b8"><span style="color:var(--warn);margin-right:6px">·</span>${k.label||fmtDateShort(k.date)}: ${k.items} item, net valuasi ${k.net_val<0?'-Rp '+fmtRp(Math.abs(k.net_val)):'Rp '+fmtRp(k.net_val)}</div>`;
   document.getElementById('trend-kritis').innerHTML=kritisHtml;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // TAB: PENGGUNA
 // ═══════════════════════════════════════════════════════════════
-function renderPengguna() {
+function renderPengguna(){
   const el=document.getElementById('tab-content');
   let cardsHtml='<div class="user-grid">';
   const totDef=F_TOTALS.totalDefVal||1;
   F_BY_USER.forEach((r,i)=>{
-    const c=WH_PAL[i%WH_PAL.length];
-    const pct=Math.abs(r.def_val)/Math.abs(totDef)*100;
-    cardsHtml+=`<div class="card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <div class="user-avatar" style="background:${c}30;border-color:${c};color:${c}">${(r.User_Short[0]||'?').toUpperCase()}</div>
-        <div>
-          <div style="font-weight:700;color:${c};font-size:13px">${r.User_Short}</div>
-          <div style="font-size:11px;color:var(--muted)">${r.docs} dok · ${r.items} item</div>
-        </div>
-      </div>
+    const c=WH_PAL[i%WH_PAL.length],pct=Math.abs(r.def_val)/Math.abs(totDef)*100;
+    cardsHtml+=`<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div class="user-avatar" style="background:${c}30;border-color:${c};color:${c}">${(r.User_Short[0]||'?').toUpperCase()}</div>
+      <div><div style="font-weight:700;color:${c};font-size:13px">${r.User_Short}</div>
+        <div style="font-size:11px;color:var(--muted)">${r.docs} dok · ${r.items} item</div></div></div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div class="stat-mini">
-          <div class="stat-mini-label">DEFISIT QTY</div>
-          <div class="stat-mini-val" style="color:#ef4444">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
-        </div>
-        <div class="stat-mini">
-          <div class="stat-mini-label">SURPLUS QTY</div>
-          <div class="stat-mini-val" style="color:#22c55e">${r.sur_qty>0?'+':''}${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
-        </div>
+        <div class="stat-mini"><div class="stat-mini-label">DEFISIT QTY</div><div class="stat-mini-val" style="color:#ef4444">${r.def_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">SURPLUS QTY</div><div class="stat-mini-val" style="color:#22c55e">${r.sur_qty>0?'+':''}${r.sur_qty.toLocaleString('id-ID',{maximumFractionDigits:0})}</div></div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${pct.toFixed(1)}% dari total</div>
-      <div style="background:#334155;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px">
-        <div style="width:${Math.min(pct,100).toFixed(1)}%;height:100%;background:${c};border-radius:4px"></div>
-      </div>
+      <div style="background:#334155;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px"><div style="width:${Math.min(pct,100).toFixed(1)}%;height:100%;background:${c};border-radius:4px"></div></div>
       <div style="font-size:14px;font-weight:700;color:#ef4444">${r.def_val<0?'-'+fmtRp(Math.abs(r.def_val)):fmtRp(r.def_val)}</div>
     </div>`;
   });
   cardsHtml+='</div>';
-  if(!F_BY_USER.length) cardsHtml = `<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data pengguna untuk rentang tanggal ini.</div>`;
+  if(!F_BY_USER.length)cardsHtml=`<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data.</div>`;
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-user"></div>${cardsHtml}`;
-  if(F_BY_USER.length) {
+  if(F_BY_USER.length){
     const sorted=[...F_BY_USER].sort((a,b)=>a.def_val-b.def_val);
-    Plotly.newPlot('chart-user',[{
-      type:'bar',orientation:'h',
-      x:sorted.map(u=>Math.abs(u.def_val)/1e6),
-      y:sorted.map(u=>u.User_Short),
-      marker:{color:WH_PAL.slice(0,sorted.length)},
-      hovertemplate:'%{y}<br>Defisit: Rp %{x:.2f} Jt<extra></extra>',
-      name:'Defisit Valuasi',
-    }],{...PLOT_LAY,
-      title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},
-      margin:{l:120,r:20,t:40,b:50},
-      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'}
-    },{responsive:true,displayModeBar:false});
+    Plotly.newPlot('chart-user',[{type:'bar',orientation:'h',x:sorted.map(u=>Math.abs(u.def_val)/1e6),y:sorted.map(u=>u.User_Short),marker:{color:WH_PAL.slice(0,sorted.length)},hovertemplate:'%{y}<br>Defisit: Rp %{x:.2f} Jt<extra></extra>',name:'Defisit Valuasi'}],
+      {...PLOT_LAY,title:{...TITLE_FONT,text:'Defisit Valuasi per Pengguna (Juta Rp)'},margin:{l:120,r:20,t:40,b:50},xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'}},{responsive:true,displayModeBar:false});
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
 // TAB: TOP ITEM
 // ═══════════════════════════════════════════════════════════════
-function renderTopItem() {
+function renderTopItem(){
   const el=document.getElementById('tab-content');
   el.innerHTML=filterBannerHTML()+`<div class="card" id="chart-top-def"></div><div class="card" id="chart-top-sur"></div>`;
   const defLabels=F_TOP_DEF.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
-  if(F_TOP_DEF.length) {
-    Plotly.newPlot('chart-top-def',[{
-      type:'bar',orientation:'h',
-      x:F_TOP_DEF.map(r=>Math.abs(r.ValuasiDiff)/1e6),
-      y:defLabels,
-      marker:{color:C.deficit},
-      text:F_TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),
-      textposition:'inside',
-      customdata:F_TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-      hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
-    }],{...PLOT_LAY,
-      title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},
-      yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
-      margin:{l:280,r:20,t:40,b:50},
-      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
-      height:400,
-    },{responsive:true,displayModeBar:false});
+  if(F_TOP_DEF.length){
+    Plotly.newPlot('chart-top-def',[{type:'bar',orientation:'h',x:F_TOP_DEF.map(r=>Math.abs(r.ValuasiDiff)/1e6),y:defLabels,marker:{color:C.deficit},text:F_TOP_DEF.map(r=>Math.round(r.QtyDiff)+' qty'),textposition:'inside',customdata:F_TOP_DEF.map(r=>[r.Docs,Math.round(r.QtyDiff)]),hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>'}],
+      {...PLOT_LAY,title:{...TITLE_FONT,text:'Top 10 Item Defisit (Valuasi)'},yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},margin:{l:280,r:20,t:40,b:50},xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},height:400},{responsive:true,displayModeBar:false});
   }
   const surLabels=F_TOP_SUR.map(r=>(r.ItemName||'').substring(0,30)+(r.ItemName&&r.ItemName.length>30?'…':''));
-  if(F_TOP_SUR.length) {
-    Plotly.newPlot('chart-top-sur',[{
-      type:'bar',orientation:'h',
-      x:F_TOP_SUR.map(r=>r.ValuasiDiff/1e6),
-      y:surLabels,
-      marker:{color:C.surplus},
-      text:F_TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),
-      textposition:'inside',
-      customdata:F_TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),
-      hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>',
-    }],{...PLOT_LAY,
-      title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},
-      yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},
-      margin:{l:280,r:20,t:40,b:50},
-      xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},
-      height:400,
-    },{responsive:true,displayModeBar:false});
+  if(F_TOP_SUR.length){
+    Plotly.newPlot('chart-top-sur',[{type:'bar',orientation:'h',x:F_TOP_SUR.map(r=>r.ValuasiDiff/1e6),y:surLabels,marker:{color:C.surplus},text:F_TOP_SUR.map(r=>Math.round(r.QtyDiff)+' qty'),textposition:'inside',customdata:F_TOP_SUR.map(r=>[r.Docs,Math.round(r.QtyDiff)]),hovertemplate:'%{y}<br>Net Qty: %{customdata[1]}<br>Valuasi: Rp %{x:.2f} Jt<br>(%{customdata[0]} dok)<extra></extra>'}],
+      {...PLOT_LAY,title:{...TITLE_FONT,text:'Top 10 Item Surplus (Valuasi)'},yaxis:{...PLOT_LAY.yaxis,autorange:'reversed'},margin:{l:280,r:20,t:40,b:50},xaxis:{...PLOT_LAY.xaxis,title:'Juta Rp'},height:400},{responsive:true,displayModeBar:false});
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB: PERBANDINGAN (NEW vs OLD)
+// ═══════════════════════════════════════════════════════════════
+function renderPerbandingan(){
+  if(!HAS_OLD){document.getElementById('tab-content').innerHTML='<div style="color:var(--muted);font-size:13px;padding:24px 0">Tidak ada data referensi lama. Upload file OLD RECO di halaman awal.</div>';return;}
+  const el=document.getElementById('tab-content');
+  const N=F_TOTALS,O=OLD_TOTALS;
+
+  function delta(nVal,oVal,lowerBetter=false){
+    const d=nVal-oVal;
+    if(d===0)return`<span class="delta-badge delta-same">= Sama</span>`;
+    const better=lowerBetter?(d<0):(d>0);
+    const cls=better?'delta-better':'delta-worse';
+    const icon=d>0?'▲':'▼';
+    return`<span class="delta-badge ${cls}">${icon} ${fmtRp(Math.abs(d))}</span>`;
+  }
+  function deltaQty(nVal,oVal,lowerBetter=false){
+    const d=nVal-oVal;
+    if(d===0)return`<span class="delta-badge delta-same">= Sama</span>`;
+    const better=lowerBetter?(d<0):(d>0);
+    const cls=better?'delta-better':'delta-worse';
+    const icon=d>0?'▲':'▼';
+    return`<span class="delta-badge ${cls}">${icon} ${smartNum(Math.abs(d))}</span>`;
+  }
+
+  // KPI comparison rows
+  const rows=[
+    {label:'Net Selisih Valuasi',nVal:N.netVal,oVal:O.netVal,lowerBetter:false,rp:true,note:'Lebih tinggi = lebih baik (surplus dominan)'},
+    {label:'Defisit Valuasi',nVal:N.totalDefVal,oVal:O.totalDefVal,lowerBetter:true,rp:true,note:'Lebih rendah (negatif lebih kecil) = lebih baik'},
+    {label:'Surplus Valuasi',nVal:N.totalSurVal,oVal:O.totalSurVal,lowerBetter:false,rp:true,note:'Lebih tinggi = lebih baik'},
+    {label:'Defisit Qty',nVal:N.totalDefQty,oVal:O.totalDefQty,lowerBetter:true,rp:false,note:'Unit fisik kurang'},
+    {label:'Surplus Qty',nVal:N.totalSurQty,oVal:O.totalSurQty,lowerBetter:false,rp:false,note:'Unit fisik lebih'},
+    {label:'Total Item Unik',nVal:N.totalItems,oVal:O.totalItems,lowerBetter:false,rp:false,note:'Item dalam rekonsiliasi'},
+    {label:'Total Dokumen',nVal:N.totalDocs,oVal:O.totalDocs,lowerBetter:false,rp:false,note:'MAT-RECO entries'},
+  ];
+
+  let kpiRows='';
+  for(const r of rows){
+    const fmt=r.rp?fmtRp:smartNum;
+    const nColor=r.nVal<0?'#ef4444':r.nVal>0?'#22c55e':C.muted;
+    const oColor=r.oVal<0?'#ef4444':r.oVal>0?'#22c55e':C.muted;
+    const dBadge=r.rp?delta(r.nVal,r.oVal,r.lowerBetter):deltaQty(r.nVal,r.oVal,r.lowerBetter);
+    kpiRows+=`<tr>
+      <td style="font-weight:600;color:#e2e8f0;width:180px">${r.label}</td>
+      <td style="text-align:right"><span style="font-weight:700;color:${nColor}">${r.rp?(r.nVal<0?'-'+fmt(Math.abs(r.nVal)):(r.nVal>0?'+':'')+fmt(r.nVal)):smartNum(r.nVal)}</span><span class="new-badge">BARU</span></td>
+      <td style="text-align:right"><span style="font-weight:700;color:${oColor}">${r.rp?(r.oVal<0?'-'+fmt(Math.abs(r.oVal)):(r.oVal>0?'+':'')+fmt(r.oVal)):smartNum(r.oVal)}</span><span class="old-badge">LAMA</span></td>
+      <td style="text-align:center">${dBadge}</td>
+      <td style="color:var(--muted);font-size:11px">${r.note}</td>
+    </tr>`;
+  }
+
+  // Per warehouse comparison
+  const newWHMap={};for(const r of F_BY_WH)newWHMap[r.WH_Short]=r;
+  const oldByWH={};
+  for(const r of OLD_PIV){
+    const wh=r.WH_Short;
+    if(!oldByWH[wh])oldByWH[wh]={WH_Short:wh,items:0,def_val:0,sur_val:0,def_qty:0,sur_qty:0};
+    oldByWH[wh].items++;
+    if(r.QtyDiff<0){oldByWH[wh].def_val+=r.ValuasiDiff;oldByWH[wh].def_qty+=r.QtyDiff;}
+    else if(r.QtyDiff>0){oldByWH[wh].sur_val+=r.ValuasiDiff;oldByWH[wh].sur_qty+=r.QtyDiff;}
+  }
+  const allWHs=[...new Set([...Object.keys(newWHMap),...Object.keys(oldByWH)])].sort();
+  let whCompRows='';
+  for(const wh of allWHs){
+    const n=newWHMap[wh]||{def_val:0,sur_val:0,net_val:0,items:0};
+    const o=oldByWH[wh]||{def_val:0,sur_val:0,items:0};
+    const oNet=(o.def_val||0)+(o.sur_val||0);
+    const nNet=n.net_val||0;
+    const dNet=nNet-oNet;
+    const dc=dNet>0?'#34d399':dNet<0?'#f87171':C.muted;
+    const di=dNet>0?'▲':dNet<0?'▼':'=';
+    whCompRows+=`<tr>
+      <td style="font-weight:600;color:#e2e8f0">${wh}</td>
+      <td style="color:#ef4444;text-align:right">${n.def_val?'-'+fmtRp(Math.abs(n.def_val)):'—'}</td>
+      <td style="color:#ef4444;text-align:right;opacity:.6">${o.def_val?'-'+fmtRp(Math.abs(o.def_val)):'—'}</td>
+      <td style="color:#22c55e;text-align:right">${n.sur_val?'+'+fmtRp(n.sur_val):'—'}</td>
+      <td style="color:#22c55e;text-align:right;opacity:.6">${o.sur_val?'+'+fmtRp(o.sur_val):'—'}</td>
+      <td style="text-align:center"><span style="font-weight:700;color:${dc}">${di} ${fmtRp(Math.abs(dNet))}</span></td>
+    </tr>`;
+  }
+
+  // Item-level comparison: items in NEW that were also in OLD
+  const oldItemMap={};
+  for(const r of OLD_PIV)oldItemMap[`${r.ItemCode}|||${r.WH_Short}`]=r;
+  const sharedItems=F_PIV.filter(r=>oldItemMap[`${r.ItemCode}|||${r.WH_Short}`]);
+  const improved=sharedItems.filter(r=>{const o=oldItemMap[`${r.ItemCode}|||${r.WH_Short}`];return r.ValuasiDiff>o.ValuasiDiff;});
+  const worsened=sharedItems.filter(r=>{const o=oldItemMap[`${r.ItemCode}|||${r.WH_Short}`];return r.ValuasiDiff<o.ValuasiDiff;});
+  const unchanged=sharedItems.filter(r=>{const o=oldItemMap[`${r.ItemCode}|||${r.WH_Short}`];return r.ValuasiDiff===o.ValuasiDiff;});
+  const newOnly=F_PIV.filter(r=>!oldItemMap[`${r.ItemCode}|||${r.WH_Short}`]);
+  const resolvedItems=OLD_PIV.filter(r=>!F_PIV.find(n=>n.ItemCode===r.ItemCode&&n.WH_Short===r.WH_Short));
+
+  let topWorsenRows='';
+  [...worsened].sort((a,b)=>{const oa=oldItemMap[`${a.ItemCode}|||${a.WH_Short}`],ob=oldItemMap[`${b.ItemCode}|||${b.WH_Short}`];return(a.ValuasiDiff-oa.ValuasiDiff)-(b.ValuasiDiff-ob.ValuasiDiff);}).slice(0,10).forEach(r=>{
+    const o=oldItemMap[`${r.ItemCode}|||${r.WH_Short}`];
+    const d=r.ValuasiDiff-o.ValuasiDiff;
+    topWorsenRows+=`<tr>
+      <td style="color:#93c5fd;font-family:monospace;font-size:11px">${r.ItemCode}</td>
+      <td style="color:#e2e8f0;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.ItemName}</td>
+      <td>${r.WH_Short}</td>
+      <td style="text-align:right;color:#ef4444;font-weight:600">${smartRpSigned(r.ValuasiDiff)}</td>
+      <td style="text-align:right;color:var(--muted)">${smartRpSigned(o.ValuasiDiff)}</td>
+      <td style="text-align:right;color:#f87171;font-weight:700">▼ ${fmtRp(Math.abs(d))}</td>
+    </tr>`;
+  });
+
+  let topImproveRows='';
+  [...improved].sort((a,b)=>{const oa=oldItemMap[`${a.ItemCode}|||${a.WH_Short}`],ob=oldItemMap[`${b.ItemCode}|||${b.WH_Short}`];return(b.ValuasiDiff-ob.ValuasiDiff)-(a.ValuasiDiff-oa.ValuasiDiff);}).slice(0,10).forEach(r=>{
+    const o=oldItemMap[`${r.ItemCode}|||${r.WH_Short}`];
+    const d=r.ValuasiDiff-o.ValuasiDiff;
+    topImproveRows+=`<tr>
+      <td style="color:#93c5fd;font-family:monospace;font-size:11px">${r.ItemCode}</td>
+      <td style="color:#e2e8f0;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.ItemName}</td>
+      <td>${r.WH_Short}</td>
+      <td style="text-align:right;color:#34d399;font-weight:600">${smartRpSigned(r.ValuasiDiff)}</td>
+      <td style="text-align:right;color:var(--muted)">${smartRpSigned(o.ValuasiDiff)}</td>
+      <td style="text-align:right;color:#34d399;font-weight:700">▲ ${fmtRp(Math.abs(d))}</td>
+    </tr>`;
+  });
+
+  el.innerHTML=`
+  <div class="info-banner">
+    <strong>Perbandingan File Terbaru vs Referensi Lama</strong> — 
+    File Baru: <strong style="color:var(--neutral)">${fmtDate(F_TOTALS.minDate)} – ${fmtDate(F_TOTALS.maxDate)}</strong> · 
+    File Lama: <strong style="color:var(--old)">${fmtDate(OLD_TOTALS.minDate)} – ${fmtDate(OLD_TOTALS.maxDate)}</strong>
+  </div>
+
+  <!-- KPI COMPARISON -->
+  <div class="card">
+    <div class="section-label section-label-old">Perbandingan KPI Utama</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Metrik</th>
+        <th style="text-align:right">Terbaru <span class="new-badge">BARU</span></th>
+        <th style="text-align:right">Referensi Lama <span class="old-badge">LAMA</span></th>
+        <th style="text-align:center">Perubahan</th>
+        <th>Keterangan</th>
+      </tr></thead>
+      <tbody>${kpiRows}</tbody>
+    </table></div>
+  </div>
+
+  <!-- CHART -->
+  <div class="grid-2">
+    <div class="card" id="chart-cmp-val"></div>
+    <div class="card" id="chart-cmp-item"></div>
+  </div>
+
+  <!-- ITEM STATUS SUMMARY -->
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Item Membaik</div>
+      <div class="kpi-value" style="color:#34d399">${improved.length}</div>
+      <div class="kpi-sub">vs rekonsiliasi lama</div><div class="kpi-bar" style="background:#34d399"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Item Memburuk</div>
+      <div class="kpi-value" style="color:#ef4444">${worsened.length}</div>
+      <div class="kpi-sub">vs rekonsiliasi lama</div><div class="kpi-bar" style="background:#ef4444"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Item Tidak Berubah</div>
+      <div class="kpi-value" style="color:var(--muted)">${unchanged.length}</div>
+      <div class="kpi-sub">selisih sama persis</div><div class="kpi-bar" style="background:var(--muted)"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Item Baru (hanya di Terbaru)</div>
+      <div class="kpi-value" style="color:var(--neutral)">${newOnly.length}</div>
+      <div class="kpi-sub">tidak ada di referensi lama</div><div class="kpi-bar" style="background:var(--neutral)"></div></div>
+    <div class="kpi-card"><div class="kpi-label">Item Resolved (hanya di Lama)</div>
+      <div class="kpi-value" style="color:#fbbf24">${resolvedItems.length}</div>
+      <div class="kpi-sub">tidak muncul di terbaru</div><div class="kpi-bar" style="background:#fbbf24"></div></div>
+  </div>
+
+  <!-- PER WH -->
+  <div class="card">
+    <div class="section-label section-label-old">Perbandingan per Gudang</div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th>Gudang</th>
+      <th style="text-align:right">Def. Baru</th><th style="text-align:right;opacity:.6">Def. Lama</th>
+      <th style="text-align:right">Sur. Baru</th><th style="text-align:right;opacity:.6">Sur. Lama</th>
+      <th style="text-align:center">Δ Net</th>
+    </tr></thead><tbody>${whCompRows}</tbody></table></div>
+  </div>
+
+  <!-- TOP WORSENED -->
+  ${worsened.length?`<div class="card">
+    <div class="section-label" style="border-left-color:#ef4444;margin-bottom:14px">Top 10 Item Paling Memburuk</div>
+    <div class="tbl-wrap"><table class="data-tbl"><thead><tr>
+      <th>Kode</th><th>Nama Item</th><th>Gudang</th>
+      <th style="text-align:right">Nilai Baru</th><th style="text-align:right">Nilai Lama</th><th style="text-align:right">Δ Nilai</th>
+    </tr></thead><tbody>${topWorsenRows}</tbody></table></div>
+  </div>`:''}
+
+  <!-- TOP IMPROVED -->
+  ${improved.length?`<div class="card">
+    <div class="section-label" style="border-left-color:#34d399;margin-bottom:14px">Top 10 Item Paling Membaik</div>
+    <div class="tbl-wrap"><table class="data-tbl"><thead><tr>
+      <th>Kode</th><th>Nama Item</th><th>Gudang</th>
+      <th style="text-align:right">Nilai Baru</th><th style="text-align:right">Nilai Lama</th><th style="text-align:right">Δ Nilai</th>
+    </tr></thead><tbody>${topImproveRows}</tbody></table></div>
+  </div>`:''}
+  `;
+
+  // Charts
+  const cmpLabels=['Net Nilai','Defisit','Surplus'];
+  const nVals=[N.netVal/1e6,N.totalDefVal/1e6,N.totalSurVal/1e6];
+  const oVals=[O.netVal/1e6,O.totalDefVal/1e6,O.totalSurVal/1e6];
+  Plotly.newPlot('chart-cmp-val',[
+    {type:'bar',name:'Terbaru',x:cmpLabels,y:nVals,marker:{color:C.neutral},hovertemplate:'%{x}<br>%{y:.2f} Jt<extra>Terbaru</extra>'},
+    {type:'bar',name:'Referensi Lama',x:cmpLabels,y:oVals,marker:{color:C.old},opacity:.7,hovertemplate:'%{x}<br>%{y:.2f} Jt<extra>Lama</extra>'},
+  ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Perbandingan Valuasi (Juta Rp)'},barmode:'group',yaxis:{...PLOT_LAY.yaxis,title:'Juta Rp'}},{responsive:true,displayModeBar:false});
+
+  Plotly.newPlot('chart-cmp-item',[
+    {type:'pie',labels:['Membaik','Memburuk','Tidak Berubah','Item Baru','Resolved'],
+      values:[improved.length,worsened.length,unchanged.length,newOnly.length,resolvedItems.length],
+      hole:0.5,marker:{colors:['#34d399','#f87171','#64748b','#818cf8','#fbbf24'],line:{color:'#0f172a',width:2}},
+      textinfo:'label+percent',textfont:{size:11},
+      hovertemplate:'%{label}<br>%{value} item<extra></extra>'},
+  ],{...PLOT_LAY,title:{...TITLE_FONT,text:'Status Item vs Referensi Lama'},
+    annotations:[{text:`${sharedItems.length}<br>shared`,x:.5,y:.5,font:{size:11,color:'#94a3b8'},showarrow:false}]
+  },{responsive:true,displayModeBar:false});
 }
 
 // ═══════════════════════════════════════════════════════════════
 // TAB: DATA DETAIL
 // ═══════════════════════════════════════════════════════════════
-function renderDetail() {
+function renderDetail(){
   const el=document.getElementById('tab-content');
-  const whOpts=['<option value="">Semua Gudang</option>',
-    ...[...new Set(F_RAW.map(r=>r.WH_Short))].sort().map(w=>`<option value="${w}">${w}</option>`)
-  ].join('');
+  const whOpts=['<option value="">Semua Gudang</option>',...[...new Set(F_RAW.map(r=>r.WH_Short))].sort().map(w=>`<option value="${w}">${w}</option>`)].join('');
   el.innerHTML=filterBannerHTML()+`
-    <div class="info-banner">
-      <strong>Data Akumulasi per Item per Gudang</strong> — 1 baris = 1 item unik (ItemCode + Gudang).
-      Item yang sama di beberapa dokumen atau pengguna berbeda digabung &amp; dijumlahkan.
-      Kolom <strong>Pengguna</strong> menampilkan semua user yang terlibat. Klik baris untuk detail dokumen.
-    </div>
+    <div class="info-banner"><strong>Data Akumulasi per Item per Gudang</strong> — 1 baris = 1 item unik (ItemCode + Gudang). Item yang sama di beberapa dokumen digabung. Klik baris untuk detail dokumen.</div>
     <div id="detail-summary" class="summary-row"></div>
     <div class="filter-row">
       <select id="dd-wh" onchange="applyDetailFilter()">${whOpts}</select>
-      <select id="dd-tipe" onchange="applyDetailFilter()">
-        <option value="">Semua Tipe</option>
-        <option value="Defisit">Defisit</option>
-        <option value="Surplus">Surplus</option>
-      </select>
+      <select id="dd-tipe" onchange="applyDetailFilter()"><option value="">Semua Tipe</option><option value="Defisit">Defisit</option><option value="Surplus">Surplus</option></select>
       <input type="text" id="inp-search" placeholder="Cari item / kode..." oninput="applyDetailFilter()">
       <button class="btn-export" onclick="exportDetail()">↓ Export Excel</button>
     </div>
@@ -1291,151 +1227,118 @@ function renderDetail() {
   applyDetailFilter();
 }
 
-function applyDetailFilter() {
+function applyDetailFilter(){
   const wh=document.getElementById('dd-wh')?.value||'';
   const tipe=document.getElementById('dd-tipe')?.value||'';
   const search=(document.getElementById('inp-search')?.value||'').toLowerCase();
   let data=[...F_PIV];
-  if(wh) data=data.filter(r=>r.WH_Short===wh);
-  if(tipe) data=data.filter(r=>r.Tipe===tipe);
-  if(search) data=data.filter(r=>
-    (r.ItemName||'').toLowerCase().includes(search)||
-    (r.ItemCode||'').toLowerCase().includes(search)||
-    (r.User_Short||'').toLowerCase().includes(search)
-  );
-  if(detailSort.col) {
-    data.sort((a,b)=>{
-      let va=a[detailSort.col], vb=b[detailSort.col];
-      if(typeof va==='string') va=va.toLowerCase(), vb=vb.toLowerCase();
-      return detailSort.asc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
-    });
-  } else {
-    data.sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff);
-  }
-  detailFiltered=data;
-  detailPage=1;
-  renderDetailSummary();
-  renderDetailTable();
+  if(wh)data=data.filter(r=>r.WH_Short===wh);
+  if(tipe)data=data.filter(r=>r.Tipe===tipe);
+  if(search)data=data.filter(r=>(r.ItemName||'').toLowerCase().includes(search)||(r.ItemCode||'').toLowerCase().includes(search)||(r.User_Short||'').toLowerCase().includes(search));
+  if(detailSort.col){
+    data.sort((a,b)=>{let va=a[detailSort.col],vb=b[detailSort.col];if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}return detailSort.asc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);});
+  } else {data.sort((a,b)=>a.ValuasiDiff-b.ValuasiDiff);}
+  detailFiltered=data;detailPage=1;
+  renderDetailSummary();renderDetailTable();
 }
 
-function renderDetailSummary() {
+function renderDetailSummary(){
   const d=detailFiltered;
   const defVal=d.filter(r=>r.ValuasiDiff<0).reduce((a,r)=>a+r.ValuasiDiff,0);
   const surVal=d.filter(r=>r.ValuasiDiff>0).reduce((a,r)=>a+r.ValuasiDiff,0);
-  const net=defVal+surVal;
-  const totalDocs=d.reduce((a,r)=>a+r.Docs,0);
-  const el=document.getElementById('detail-summary');
-  if(!el) return;
+  const net=defVal+surVal,totalDocs=d.reduce((a,r)=>a+r.Docs,0);
+  const el=document.getElementById('detail-summary');if(!el)return;
   el.innerHTML=[
     {label:'Item Unik',val:d.length.toLocaleString('id-ID'),color:'#f1f5f9'},
     {label:'Dokumen Sumber',val:totalDocs.toLocaleString('id-ID'),color:'#818cf8'},
     {label:'Total Defisit',val:(defVal<0?'-':'')+fmtRp(Math.abs(defVal)),color:'#ef4444'},
     {label:'Total Surplus',val:surVal>0?'+'+fmtRp(surVal):fmtRp(surVal),color:'#22c55e'},
     {label:'Net Valuasi',val:(net<0?'-':net>0?'+':'')+fmtRp(Math.abs(net)),color:net<0?'#ef4444':'#22c55e'},
-  ].map(m=>`<div class="mini-card"><div class="mini-label">${m.label}</div>
-    <div class="mini-val" style="color:${m.color}">${m.val}</div></div>`).join('');
+  ].map(m=>`<div class="mini-card"><div class="mini-label">${m.label}</div><div class="mini-val" style="color:${m.color}">${m.val}</div></div>`).join('');
 }
 
-function setPageSize(n, btn) {
+function setPageSize(n,btn){
   document.querySelectorAll('.ps-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  detailPageSize=n; detailPage=1;
-  renderDetailTable();
+  btn.classList.add('active');detailPageSize=n;detailPage=1;renderDetailTable();
 }
 
-// ── KOLOM TABEL DETAIL ────────────────────────────────────────
-// Kolom Pengguna: menampilkan semua user gabungan
 const DETAIL_COLS=[
-  {key:'ItemCode',   label:'Kode',        w:'100px'},
-  {key:'ItemName',   label:'Nama Item',   w:'200px'},
-  {key:'WH_Short',   label:'Gudang',      w:'90px'},
-  {key:'User_Short', label:'Pengguna',    w:'130px'},  // lebih lebar karena multi-user
-  {key:'QtyDiff',    label:'Sel. Qty',    w:'80px',  num:true},
-  {key:'CurrentQty', label:'Qty Sistem',  w:'85px',  num:true},
-  {key:'Quantity',   label:'Qty Fisik',   w:'80px',  num:true},
-  {key:'ValRate',    label:'Hrg Pokok',   w:'110px', num:true, rp:true},
-  {key:'ValuasiDiff',label:'Sel. Nilai',  w:'120px', num:true, rp:true},
-  {key:'Docs',       label:'Dok',         w:'50px',  num:true},
-  {key:'TanggalAwal',label:'Tgl Awal',    w:'85px',  date:true},
-  {key:'TanggalAkhir',label:'Tgl Akhir', w:'85px',  date:true},
-  {key:'Tipe',       label:'Tipe',        w:'65px'},
+  {key:'ItemCode',label:'Kode',w:'100px'},
+  {key:'ItemName',label:'Nama Item',w:'200px'},
+  {key:'WH_Short',label:'Gudang',w:'90px'},
+  {key:'User_Short',label:'Pengguna',w:'130px'},
+  {key:'QtyDiff',label:'Sel. Qty',w:'80px',num:true},
+  {key:'CurrentQty',label:'Qty Sistem',w:'85px',num:true},
+  {key:'Quantity',label:'Qty Fisik',w:'80px',num:true},
+  {key:'ValRate',label:'Hrg Pokok',w:'110px',num:true,rp:true},
+  {key:'ValuasiDiff',label:'Sel. Nilai',w:'120px',num:true,rp:true},
+  {key:'Docs',label:'Dok',w:'50px',num:true},
+  {key:'TanggalAwal',label:'Tgl Awal',w:'85px',date:true},
+  {key:'TanggalAkhir',label:'Tgl Akhir',w:'85px',date:true},
+  {key:'Tipe',label:'Tipe',w:'65px'},
 ];
 
-function sortDetail(col) {
-  if(detailSort.col===col) detailSort.asc=!detailSort.asc;
-  else { detailSort.col=col; detailSort.asc=true; }
+function sortDetail(col){
+  if(detailSort.col===col)detailSort.asc=!detailSort.asc;
+  else{detailSort.col=col;detailSort.asc=true;}
   applyDetailFilter();
 }
 
-function renderDetailTable() {
+function renderDetailTable(){
   const wrap=document.getElementById('detail-table-wrap');
   const pgEl=document.getElementById('detail-pagination');
-  if(!wrap) return;
+  if(!wrap)return;
   const start=(detailPage-1)*detailPageSize;
   const page=detailFiltered.slice(start,start+detailPageSize);
   const totalPages=Math.max(1,Math.ceil(detailFiltered.length/detailPageSize));
-
-  let thead=`<thead><tr>`;
+  let thead='<thead><tr>';
   for(const col of DETAIL_COLS){
     const arrow=detailSort.col===col.key?(detailSort.asc?' ▲':' ▼'):'';
-    const align = (col.num || col.date) ? 'text-align:right' : '';
+    const align=(col.num||col.date)?'text-align:right':'';
     thead+=`<th style="min-width:${col.w};${align}" onclick="sortDetail('${col.key}')">${col.label}${arrow}</th>`;
   }
-  thead+=`</tr></thead>`;
+  thead+='</tr></thead>';
+  // Build old item map for comparison badge in detail
+  const oldItemMap={};
+  if(HAS_OLD)for(const r of OLD_PIV)oldItemMap[`${r.ItemCode}|||${r.WH_Short}`]=r;
 
   let tbody='<tbody>';
   page.forEach((r,ri)=>{
-    const rowBg=(ri%2===1)?'background:#0b1120':'';
+    const rowBg=ri%2===1?'background:#0b1120':'';
     const tipeColor=r.Tipe==='Defisit'?C.deficit:r.Tipe==='Surplus'?C.surplus:C.muted;
-    // Cari index di F_PIV berdasarkan ItemCode+WH_Short (bukan indexOf karena objek berbeda)
-    const pivIdx = F_PIV.findIndex(p => p.ItemCode===r.ItemCode && p.WH_Short===r.WH_Short);
+    const pivIdx=F_PIV.findIndex(p=>p.ItemCode===r.ItemCode&&p.WH_Short===r.WH_Short);
+    // comparison badge
+    const oKey=`${r.ItemCode}|||${r.WH_Short}`;
+    let cmpBadge='';
+    if(HAS_OLD&&oldItemMap[oKey]){
+      const od=oldItemMap[oKey];
+      const d=r.ValuasiDiff-od.ValuasiDiff;
+      if(d>0)cmpBadge=`<span style="font-size:9px;color:#34d399;margin-left:4px">▲</span>`;
+      else if(d<0)cmpBadge=`<span style="font-size:9px;color:#f87171;margin-left:4px">▼</span>`;
+    }
     tbody+=`<tr class="data-tbl-row" style="${rowBg};cursor:pointer" onclick="showModal(${pivIdx})">`;
     for(const col of DETAIL_COLS){
       let val=r[col.key];
-      let style = (col.num || col.date) ? 'text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace' : '';
+      let style=(col.num||col.date)?'text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace':'';
       let display='';
-      if(col.date) {
-        display = fmtDateISO(val);
-      } else if(col.rp) {
-        const n = (val===null||val===undefined||val===''||isNaN(val)) ? '—' : smartNum(Math.abs(val));
-        display = n === '—' ? '—' : `Rp\u00a0${n}`;
-        style += ';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
-      } else if(col.num) {
-        display=(val===null||val===undefined||val===''||isNaN(val))?'—':smartNum(val);
-        if(col.key==='QtyDiff'||col.key==='ValuasiDiff') {
-          style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);
-          if(val>0) display='+'+display;
-        } else {
-          style+=';color:#cbd5e1';
-        }
-      } else if(col.key==='Tipe') {
-        display=val; style+=`;color:${tipeColor};font-weight:600`;
-      } else if(col.key==='User_Short') {
-        // Tampilkan badge jika multi-user
-        const users = (val||'').split(', ');
-        if(users.length > 1) {
-          display = `<span title="${val}" style="cursor:help">${users[0]}<span style="color:var(--neutral);font-size:10px;margin-left:4px">+${users.length-1}</span></span>`;
-        } else {
-          display = val||'—';
-        }
-        style += ';max-width:130px;overflow:hidden;text-overflow:ellipsis';
-      } else {
-        display=val||'';
-      }
+      if(col.date){display=fmtDateISO(val);}
+      else if(col.rp){const n=(val===null||val===undefined||val===''||isNaN(val))?'—':smartNum(Math.abs(val));display=n==='—'?'—':`Rp\u00a0${n}`;style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);}
+      else if(col.num){display=(val===null||val===undefined||val===''||isNaN(val))?'—':smartNum(val);if(col.key==='QtyDiff'||col.key==='ValuasiDiff'){style+=';color:'+(val<0?C.deficit:val>0?C.surplus:C.muted);if(val>0)display='+'+display;}else{style+=';color:#cbd5e1';}}
+      else if(col.key==='Tipe'){display=val;style+=`;color:${tipeColor};font-weight:600`;}
+      else if(col.key==='User_Short'){const users=(val||'').split(', ');if(users.length>1){display=`<span title="${val}" style="cursor:help">${users[0]}<span style="color:var(--neutral);font-size:10px;margin-left:4px">+${users.length-1}</span></span>`;}else{display=val||'—';}style+=';max-width:130px;overflow:hidden;text-overflow:ellipsis';}
+      else{display=val||'';}
+      // Add comparison badge to Sel. Nilai column
+      if(col.key==='ValuasiDiff')display+=cmpBadge;
       tbody+=`<td style="font-size:12px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:${col.w};${style}">${display}</td>`;
     }
     tbody+='</tr>';
   });
   tbody+='</tbody>';
-
-  wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">
-    ${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail dokumen per pengguna
-  </div>
+  wrap.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${detailFiltered.length} item unik · ${detailPageSize} baris/hal · Klik baris untuk detail${HAS_OLD?' · ▲▼ = perbandingan vs referensi lama':''}</div>
   <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
     <table class="data-tbl" style="width:100%;border-collapse:collapse">${thead}${tbody}</table>
   </div>`;
-
-  if(pgEl) pgEl.innerHTML=`
+  if(pgEl)pgEl.innerHTML=`
     <button class="page-btn" onclick="goPage(1)" ${detailPage===1?'disabled':''}>«</button>
     <button class="page-btn" onclick="goPage(${detailPage-1})" ${detailPage===1?'disabled':''}>‹</button>
     <span style="color:var(--muted)">Hal ${detailPage} / ${totalPages}</span>
@@ -1444,128 +1347,181 @@ function renderDetailTable() {
     <span style="margin-left:6px;color:var(--muted)">(${detailFiltered.length} total)</span>`;
 }
 
-function goPage(p) {
-  const total=Math.max(1,Math.ceil(detailFiltered.length/detailPageSize));
-  detailPage=Math.max(1,Math.min(p,total));
-  renderDetailTable();
-}
+function goPage(p){const total=Math.max(1,Math.ceil(detailFiltered.length/detailPageSize));detailPage=Math.max(1,Math.min(p,total));renderDetailTable();}
 
-// ── EXPORT EXCEL ──────────────────────────────────────────────
-function exportDetail() {
-  const data=detailFiltered.map(r=>({
-    'Kode':r.ItemCode,'Nama Item':r.ItemName,'Gudang':r.WH_Short,
-    'Pengguna':r.User_Short,  // sudah gabungan semua user
-    'Sel. Qty':r.QtyDiff,'Qty Sistem':r.CurrentQty,'Qty Fisik':r.Quantity,
-    'Hrg Pokok':r.ValRate,'Sel. Nilai':r.ValuasiDiff,'Jml Dok':r.Docs,
-    'Tgl Awal':fmtDateISO(r.TanggalAwal),'Tgl Akhir':fmtDateISO(r.TanggalAkhir),'Tipe':r.Tipe,
-    'Filter Dari': DATE_FROM ? fmtDateISO(DATE_FROM) : '',
-    'Filter Sampai': DATE_TO ? fmtDateISO(DATE_TO) : '',
-  }));
+function exportDetail(){
+  // Build old map for export
+  const oldItemMap={};
+  if(HAS_OLD)for(const r of OLD_PIV)oldItemMap[`${r.ItemCode}|||${r.WH_Short}`]=r;
+  const data=detailFiltered.map(r=>{
+    const oKey=`${r.ItemCode}|||${r.WH_Short}`;
+    const o=oldItemMap[oKey];
+    return{
+      'Kode':r.ItemCode,'Nama Item':r.ItemName,'Gudang':r.WH_Short,'Pengguna':r.User_Short,
+      'Sel. Qty':r.QtyDiff,'Qty Sistem':r.CurrentQty,'Qty Fisik':r.Quantity,
+      'Hrg Pokok':r.ValRate,'Sel. Nilai (Baru)':r.ValuasiDiff,'Jml Dok':r.Docs,
+      'Tgl Awal':fmtDateISO(r.TanggalAwal),'Tgl Akhir':fmtDateISO(r.TanggalAkhir),'Tipe':r.Tipe,
+      ...(HAS_OLD?{
+        'Sel. Nilai (Lama)':o?o.ValuasiDiff:'',
+        'Δ Nilai':o?r.ValuasiDiff-o.ValuasiDiff:'',
+        'Status vs Lama':o?(r.ValuasiDiff>o.ValuasiDiff?'Membaik':r.ValuasiDiff<o.ValuasiDiff?'Memburuk':'Sama'):'Item Baru',
+      }:{}),
+    };
+  });
   const ws=XLSX.utils.json_to_sheet(data);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Akumulasi');
-  const suffix = (DATE_FROM||DATE_TO) ? `_${fmtDateISO(DATE_FROM)||'awal'}_sd_${fmtDateISO(DATE_TO)||'akhir'}` : '';
+  const suffix=(DATE_FROM||DATE_TO)?`_${fmtDateISO(DATE_FROM)||'awal'}_sd_${fmtDateISO(DATE_TO)||'akhir'}`:'';
   XLSX.writeFile(wb,`stock_akumulasi${suffix}.xlsx`);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MODAL DETAIL — tampilkan semua dokumen item+gudang ini
-// ═══════════════════════════════════════════════════════════════
-function showModal(idx) {
-  const r=F_PIV[idx];
-  if(!r) return;
+// ── MODAL ──────────────────────────────────────────────────────
+function showModal(idx){
+  const r=F_PIV[idx];if(!r)return;
   const accent=r.Tipe==='Defisit'?'#ef4444':'#22c55e';
   const tipeBg=r.Tipe==='Defisit'?'#ef444418':'#22c55e18';
 
-  // Semua dokumen RAW untuk item+gudang ini (tidak filter by user)
-  const docs=F_RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
+  // Docs dari file BARU (current, mungkin difilter tanggal)
+  const newDocs=F_RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
     .sort((a,b)=>(b.PostingDate||0)-(a.PostingDate||0));
 
-  let docRows='';
-  docs.forEach((d,i)=>{
-    const bg=i%2===0?'#0b1120':C.card2;
+  // Docs dari file LAMA (OLD_RAW) — sama item + gudang, tidak difilter tanggal
+  const oldDocs=HAS_OLD
+    ? OLD_RAW.filter(d=>d.ItemCode===r.ItemCode&&d.WH_Short===r.WH_Short)
+        .sort((a,b)=>(b.PostingDate||0)-(a.PostingDate||0))
+    : [];
+
+  const totalAllDocs=newDocs.length+oldDocs.length;
+
+  // ── Helper render satu baris dokumen ──
+  const mono='font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace';
+  function renderDocRow(d,bg,isOld){
     const qc=d.QtyDiff<0?'#ef4444':d.QtyDiff>0?'#34d399':C.muted;
     const vc=d.ValuasiDiff<0?'#ef4444':d.ValuasiDiff>0?'#34d399':C.muted;
     const tc=d.Tipe==='Defisit'?'#ef4444':d.Tipe==='Surplus'?'#34d399':C.muted;
-    const mono='font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace';
-    docRows+=`<tr style="background:${bg}">
-      <td style="color:#93c5fd;font-family:monospace;font-size:10px;padding:7px 10px">${d.ID}</td>
-      <td style="padding:7px 10px;font-size:11px">${fmtDateISO(d.PostingDate)}</td>
-      <td style="padding:7px 10px;font-size:11px;color:#94a3b8">${d.User_Short}</td>
+    const srcBadge=isOld
+      ? `<span style="font-size:9px;background:#a78bfa20;border:1px solid #a78bfa40;color:#a78bfa;border-radius:10px;padding:1px 7px;margin-left:5px;letter-spacing:.6px">LAMA</span>`
+      : `<span style="font-size:9px;background:#818cf820;border:1px solid #818cf840;color:#818cf8;border-radius:10px;padding:1px 7px;margin-left:5px;letter-spacing:.6px">BARU</span>`;
+    return`<tr style="background:${bg}${isOld?';border-left:3px solid #a78bfa40':''}">
+      <td style="color:${isOld?'#c4b5fd':'#93c5fd'};font-family:monospace;font-size:10px;padding:7px 10px;white-space:nowrap">${d.ID}${srcBadge}</td>
+      <td style="padding:7px 10px;font-size:11px;white-space:nowrap;color:${isOld?'#94a3b8':'#e2e8f0'}">${fmtDateISO(d.PostingDate)}</td>
+      <td style="padding:7px 10px;font-size:11px;color:#94a3b8;white-space:nowrap">${d.User_Short||'—'}</td>
       <td style="padding:7px 10px;text-align:right;font-size:11px;${mono}">${smartNum(d.CurrentQty)}</td>
       <td style="padding:7px 10px;text-align:right;font-size:11px;${mono}">${smartNum(d.Quantity)}</td>
       <td style="padding:7px 10px;text-align:right;font-size:11px;color:${qc};font-weight:600;${mono}">${smartSigned(d.QtyDiff)}</td>
       <td style="padding:7px 10px;text-align:right;font-size:11px;color:${vc};font-weight:600;${mono}">${smartRpSigned(d.ValuasiDiff)}</td>
       <td style="padding:7px 10px;font-size:11px;color:${tc};font-weight:600">${d.Tipe}</td>
     </tr>`;
+  }
+
+  // ── Bangun semua baris — BARU dulu, lalu pemisah, lalu LAMA ──
+  let docRows='';
+  newDocs.forEach((d,i)=>{
+    docRows+=renderDocRow(d,i%2===0?'#0d1526':C.card2,false);
   });
 
-  // Tampilkan semua pengguna yang terlibat
-  const userList = r.User_Short || '—';
+  if(oldDocs.length){
+    // Baris pemisah / section header untuk LAMA
+    docRows+=`<tr>
+      <td colspan="8" style="padding:6px 10px;background:#1a1535;border-top:2px solid #a78bfa40;border-bottom:1px solid #a78bfa30">
+        <span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:1.4px;text-transform:uppercase">◎ History — Rekonsiliasi Sebelumnya (${oldDocs.length} dokumen)</span>
+      </td>
+    </tr>`;
+    oldDocs.forEach((d,i)=>{
+      docRows+=renderDocRow(d,i%2===0?'#110d1f':'#150f28',true);
+    });
+  }
+
+  // ── Ringkasan net lama (jika ada) untuk header ──
+  const oldNetQty=oldDocs.reduce((a,d)=>a+d.QtyDiff,0);
+  const oldNetVal=oldDocs.reduce((a,d)=>a+d.ValuasiDiff,0);
+  const deltaVal=r.ValuasiDiff-oldNetVal;
+  const deltaColor=deltaVal>0?'#34d399':deltaVal<0?'#f87171':C.muted;
+  const deltaIcon=deltaVal>0?'▲':deltaVal<0?'▼':'=';
+
+  // Summary strip OLD (hanya jika ada)
+  const oldSummaryHtml=oldDocs.length?`
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:#a78bfa08;border:1px solid #a78bfa30;border-radius:10px;align-items:center">
+      <div style="flex-shrink:0"><span style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:1.3px;text-transform:uppercase">◎ Ringkasan Lama</span></div>
+      <div style="flex:1;display:flex;gap:20px;flex-wrap:wrap">
+        <div><div style="font-size:10px;color:var(--muted)">Sel. Qty (lama)</div>
+          <div style="font-size:13px;font-weight:700;color:${oldNetQty<0?'#ef4444':'#34d399'}">${smartSigned(oldNetQty)}</div></div>
+        <div><div style="font-size:10px;color:var(--muted)">Sel. Nilai (lama)</div>
+          <div style="font-size:13px;font-weight:700;color:${oldNetVal<0?'#ef4444':'#34d399'}">${smartRpSigned(oldNetVal)}</div></div>
+        <div><div style="font-size:10px;color:var(--muted)">Dokumen lama</div>
+          <div style="font-size:13px;font-weight:700;color:var(--muted)">${oldDocs.length}</div></div>
+      </div>
+      <div style="flex-shrink:0;text-align:right">
+        <div style="font-size:10px;color:var(--muted)">Δ Nilai (baru vs lama)</div>
+        <div style="font-size:16px;font-weight:800;color:${deltaColor}">${deltaIcon} ${fmtRp(Math.abs(deltaVal))}</div>
+        <div style="font-size:10px;color:${deltaColor}">${deltaVal>0?'Membaik':deltaVal<0?'Memburuk':'Sama'}</div>
+      </div>
+    </div>`:'';
 
   document.getElementById('modal-panel').innerHTML=`
     <div class="modal-header">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="width:8px;height:8px;border-radius:50%;background:${accent};display:inline-block"></span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="width:8px;height:8px;border-radius:50%;background:${accent};display:inline-block;flex-shrink:0"></span>
         <span style="font-weight:600;font-size:13px;color:#e2e8f0">Detail Item</span>
         <span style="font-size:12px;color:var(--muted)">— ${r.ItemCode}</span>
+        <span style="font-size:10px;color:var(--muted);margin-left:4px">${r.WH_Short}</span>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
     <div class="cell-grid" style="margin-bottom:8px">
-      ${dc('Kode Item',r.ItemCode,'#93c5fd')}
-      ${dc('Gudang',r.WH_Short,'#f1f5f9')}
-      ${dc('Tgl Awal',fmtDateISO(r.TanggalAwal),'#94a3b8')}
-      ${dc('Tgl Akhir',fmtDateISO(r.TanggalAkhir),'#94a3b8')}
-      ${dc('Jml Dokumen',String(r.Docs),'#818cf8')}
-      <div class="detail-cell">
-        <div class="detail-cell-label">TIPE</div>
-        <span class="tipe-badge" style="background:${tipeBg};border:1px solid ${accent}50;color:${accent}">${r.Tipe}</span>
-      </div>
+      ${dc2('Kode Item',r.ItemCode,'#93c5fd')}
+      ${dc2('Gudang',r.WH_Short,'#f1f5f9')}
+      ${dc2('Tgl Awal (baru)',fmtDateISO(r.TanggalAwal),'#94a3b8')}
+      ${dc2('Tgl Akhir (baru)',fmtDateISO(r.TanggalAkhir),'#94a3b8')}
+      ${dc2('Dok. Baru',String(newDocs.length),'#818cf8')}
+      <div class="detail-cell"><div class="detail-cell-label">TIPE</div>
+        <span class="tipe-badge" style="background:${tipeBg};border:1px solid ${accent}50;color:${accent}">${r.Tipe}</span></div>
     </div>
 
-    <div style="margin-bottom:8px">
-      <div class="detail-cell" style="flex:none">
-        <div class="detail-cell-label">NAMA ITEM</div>
-        <div class="detail-cell-val" style="font-weight:600">${r.ItemName}</div>
-      </div>
-    </div>
+    <div style="margin-bottom:8px"><div class="detail-cell" style="flex:none">
+      <div class="detail-cell-label">NAMA ITEM</div>
+      <div class="detail-cell-val" style="font-weight:600">${r.ItemName}</div>
+    </div></div>
 
-    <div style="margin-bottom:8px">
-      <div class="detail-cell" style="flex:none">
-        <div class="detail-cell-label">PENGGUNA YANG TERLIBAT</div>
-        <div class="detail-cell-val" style="color:#818cf8">${userList}</div>
-      </div>
-    </div>
+    <div style="margin-bottom:14px"><div class="detail-cell" style="flex:none">
+      <div class="detail-cell-label">PENGGUNA (BARU)</div>
+      <div class="detail-cell-val" style="color:#818cf8">${r.User_Short}</div>
+    </div></div>
 
     <div class="cell-grid" style="margin-bottom:14px">
-      ${dc('Qty Sistem',smartNum(r.CurrentQty||0),'#f1f5f9')}
-      ${dc('Qty Fisik',smartNum(r.Quantity||0),'#f1f5f9')}
+      ${dc2('Qty Sistem',smartNum(r.CurrentQty||0),'#f1f5f9')}
+      ${dc2('Qty Fisik',smartNum(r.Quantity||0),'#f1f5f9')}
       <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
-        <div class="detail-cell-label">SEL. QTY (NET)</div>
-        <div class="detail-cell-val" style="color:${accent}">${smartSigned(r.QtyDiff)}</div>
-      </div>
-      ${dc('Hrg Pokok (rata-rata)',smartRp(r.ValRate),'#94a3b8')}
+        <div class="detail-cell-label">SEL. QTY NET (BARU)</div>
+        <div class="detail-cell-val" style="color:${accent}">${smartSigned(r.QtyDiff)}</div></div>
+      ${dc2('Hrg Pokok (rata-rata)',smartRp(r.ValRate),'#94a3b8')}
       <div class="detail-cell big" style="background:${tipeBg};border-color:${accent}40">
-        <div class="detail-cell-label">SEL. NILAI (NET)</div>
-        <div class="detail-cell-val" style="color:${accent}">${smartRpSigned(r.ValuasiDiff)}</div>
-      </div>
+        <div class="detail-cell-label">SEL. NILAI NET (BARU)</div>
+        <div class="detail-cell-val" style="color:${accent}">${smartRpSigned(r.ValuasiDiff)}</div></div>
     </div>
 
+    ${oldSummaryHtml}
+
     <div class="docs-section">
-      <div class="docs-title">📄 Dokumen Sumber <span style="font-weight:400;color:var(--muted)">${docs.length} dokumen${DATE_FROM||DATE_TO?' (difilter)':''} — semua pengguna</span></div>
+      <div class="docs-title">
+        📋 History Dokumen
+        <span style="font-weight:400;color:var(--muted)">${totalAllDocs} total</span>
+        <span style="color:#818cf8;font-weight:400"> · ${newDocs.length} baru</span>
+        ${oldDocs.length?`<span style="color:#a78bfa;font-weight:400"> · ${oldDocs.length} lama</span>`:''}
+        ${DATE_FROM||DATE_TO?`<span style="color:var(--warn);font-weight:400"> · data baru difilter tanggal</span>`:''}
+      </div>
       <div class="docs-scroll">
         <table style="width:100%;border-collapse:collapse">
           <thead><tr>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">No. Dokumen</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">Tanggal</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left">Pengguna</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Qty Sistem</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Qty Fisik</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Sel. Qty</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right">Sel. Nilai</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border)">Tipe</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">No. Dokumen</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">Tanggal</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">Pengguna</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap">Qty Sistem</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap">Qty Fisik</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap">Sel. Qty</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap">Sel. Nilai</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border);white-space:nowrap">Tipe</th>
           </tr></thead>
           <tbody>${docRows}</tbody>
         </table>
@@ -1575,14 +1531,10 @@ function showModal(idx) {
   document.getElementById('modal-overlay').classList.add('open');
 }
 
-function dc(label,val,color='#e2e8f0') {
-  return `<div class="detail-cell"><div class="detail-cell-label">${label}</div>
-    <div class="detail-cell-val" style="color:${color}">${val}</div></div>`;
-}
-
-function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
-function closeModalIfOverlay(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+function dc2(label,val,color='#e2e8f0'){return`<div class="detail-cell"><div class="detail-cell-label">${label}</div><div class="detail-cell-val" style="color:${color}">${val}</div></div>`;}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeModalIfOverlay(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 </script>
 </body>
 </html>
